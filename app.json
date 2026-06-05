@@ -3,12 +3,24 @@
     "name": "CIRCULAI",
     "slug": "circulai",
     "version": "1.0.0",
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
       "package": "com.circulai.app"
     },
-    "assetBundlePatterns": ["**/*"]
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ff3bd376-8459-4608-a525-c5c285c995ee"
+      }
+    },
+    "owner": "arwnsyh"
   }
 }
