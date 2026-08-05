@@ -1,0 +1,7 @@
+project_id = "circulai"
+
+[functions.create-midtrans-snap]
+verify_jwt = true
+
+[functions.midtrans-webhook]
+verify_jwt = false

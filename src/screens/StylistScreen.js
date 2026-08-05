@@ -2,19 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
+import AnimatedPressable from '../components/AnimatedPressable';
 import ProductCard from '../components/ProductCard';
 import {
   bodyShapes,
   getStyleAnalysis,
   heights,
   occasions,
-  products,
   skinTones,
   styleVibes
 } from '../data/appData';
 import { useAppState } from '../state/AppContext';
 import { layout } from '../styles/layout';
-import { cardShadow, colors } from '../theme/colors';
+import { colors, shadows } from '../theme/colors';
 
 const loadingSteps = [
   'Menganalisis warna kulit...',
@@ -24,11 +24,17 @@ const loadingSteps = [
   'Menyusun rekomendasi personalmu...'
 ];
 
-export default function StylistScreen({ onNavigate, onProductPress }) {
+export default function StylistScreen({
+  isActive = true,
+  onNavigate,
+  onProductPress,
+  onBack,
+  registerBackHandler
+}) {
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState({});
   const [loadingIndex, setLoadingIndex] = useState(0);
-  const { styleProfile, saveStyleProfile, resetStyleProfile, wishlist, toggleWishlist } = useAppState();
+  const { products, styleProfile, saveStyleProfile, resetStyleProfile, wishlist, toggleWishlist } = useAppState();
 
   const result = useMemo(() => {
     if (step === 'result') return styleProfile ?? getStyleAnalysis(answers);
@@ -69,8 +75,17 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
   };
 
   const back = () => {
-    if (typeof step === 'number' && step > 1) setStep(step - 1);
+    if (typeof step === 'number' && step > 1) {
+      setStep(step - 1);
+      return true;
+    }
+    return onBack?.() ?? false;
   };
+
+  useEffect(() => {
+    if (!isActive) return undefined;
+    return registerBackHandler?.(back);
+  }, [isActive, step, onBack, registerBackHandler]);
 
   const restart = () => {
     resetStyleProfile();
@@ -86,9 +101,11 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
     return (
       <ResultScreen
         result={result}
+        onBack={onBack}
         onRestart={restart}
         onNavigate={onNavigate}
         onProductPress={onProductPress}
+        products={products}
         wishlist={wishlist}
         toggleWishlist={toggleWishlist}
       />
@@ -103,14 +120,20 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
     >
       <View style={styles.header}>
         <View style={styles.headerTitleRow}>
-          {step > 1 && (
-            <Pressable style={styles.backButton} onPress={back}>
+          {(step > 1 || onBack) && (
+            <AnimatedPressable style={styles.backButton} onPress={back} scaleDown={0.90}>
               <Feather name="chevron-left" size={18} color={colors.forest} />
-            </Pressable>
+            </AnimatedPressable>
           )}
-          <View>
-            <Text style={styles.kicker}>CIRCULAI AI STYLIST</Text>
+          <View style={{ flex: 1 }}>
+            <View style={styles.kickerRow}>
+              <MaterialCommunityIcons name="lightning-bolt" size={11} color={colors.forest} />
+              <Text style={styles.kicker}>CIRCULAI AI STYLIST</Text>
+            </View>
             <Text style={styles.stepText}>Langkah {step} dari 5</Text>
+          </View>
+          <View style={styles.stepBadge}>
+            <Text style={styles.stepBadgeText}>{step}/5</Text>
           </View>
         </View>
         <View style={styles.progressRow}>
@@ -129,10 +152,18 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
             {skinTones.map((tone) => {
               const selected = answers.skinTone === tone.id;
               return (
-                <Pressable
+                <AnimatedPressable
                   key={tone.id}
-                  style={[styles.skinCard, selected && styles.optionCardActive]}
+                  style={[
+                    styles.skinCard,
+                    {
+                      backgroundColor: selected ? 'rgba(47,79,58,0.06)' : colors.white,
+                      borderColor: selected ? colors.forest : colors.lightGray,
+                    },
+                    selected && shadows.sm
+                  ]}
                   onPress={() => setAnswers((current) => ({ ...current, skinTone: tone.id }))}
+                  scaleDown={0.97}
                 >
                   <View style={[styles.skinSwatch, { backgroundColor: tone.hex }]} />
                   <View style={layout.flex}>
@@ -140,7 +171,7 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
                     <Text style={styles.optionDesc}>{tone.sub}</Text>
                   </View>
                   {selected && <CheckDot />}
-                </Pressable>
+                </AnimatedPressable>
               );
             })}
           </View>
@@ -156,20 +187,28 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
             {bodyShapes.map((shape) => {
               const selected = answers.bodyShape === shape.id;
               return (
-                <Pressable
+                <AnimatedPressable
                   key={shape.id}
-                  style={[styles.bodyCard, selected && styles.optionCardActive]}
+                  style={[
+                    styles.bodyCard,
+                    {
+                      backgroundColor: selected ? 'rgba(47,79,58,0.06)' : colors.white,
+                      borderColor: selected ? colors.forest : colors.lightGray,
+                    },
+                    selected && shadows.sm
+                  ]}
                   onPress={() => setAnswers((current) => ({ ...current, bodyShape: shape.id }))}
+                  scaleDown={0.97}
                 >
-                  <View style={styles.bodyIcon}>
-                    <Feather name={shape.icon} size={22} color={colors.forest} />
+                  <View style={[styles.bodyIcon, selected && styles.bodyIconActive]}>
+                    <Feather name={shape.icon} size={20} color={selected ? colors.white : colors.forest} />
                   </View>
                   <View style={layout.flex}>
                     <Text style={styles.optionTitle}>{shape.label}</Text>
                     <Text style={styles.optionDesc}>{shape.desc}</Text>
                   </View>
                   {selected && <CheckDot />}
-                </Pressable>
+                </AnimatedPressable>
               );
             })}
           </View>
@@ -187,7 +226,14 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
               return (
                 <Pressable
                   key={height}
-                  style={[styles.heightCard, selected && styles.optionCardActive]}
+                  style={[
+                    styles.heightCard,
+                    {
+                      backgroundColor: selected ? 'rgba(47,79,58,0.06)' : colors.white,
+                      borderColor: selected ? colors.forest : colors.lightGray,
+                    },
+                    selected && shadows.sm
+                  ]}
                   onPress={() => setAnswers((current) => ({ ...current, height }))}
                 >
                   <Text style={styles.optionTitle}>{height}</Text>
@@ -210,7 +256,14 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
               return (
                 <Pressable
                   key={vibe.id}
-                  style={[styles.vibeCard, selected && styles.optionCardActive]}
+                  style={[
+                    styles.vibeCard,
+                    {
+                      backgroundColor: selected ? 'rgba(47,79,58,0.06)' : colors.white,
+                      borderColor: selected ? colors.forest : colors.lightGray,
+                    },
+                    selected && shadows.sm
+                  ]}
                   onPress={() => {
                     setAnswers((current) => {
                       const currentVibes = current.styleVibe ?? [];
@@ -247,7 +300,14 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
               return (
                 <Pressable
                   key={occasion.id}
-                  style={[styles.heightCard, selected && styles.optionCardActive]}
+                  style={[
+                    styles.heightCard,
+                    {
+                      backgroundColor: selected ? 'rgba(47,79,58,0.06)' : colors.white,
+                      borderColor: selected ? colors.forest : colors.lightGray,
+                    },
+                    selected && shadows.sm
+                  ]}
                   onPress={() => {
                     setAnswers((current) => {
                       const currentOccasions = current.occasion ?? [];
@@ -269,16 +329,19 @@ export default function StylistScreen({ onNavigate, onProductPress }) {
         </QuestionBlock>
       )}
 
-      <Pressable
+      <AnimatedPressable
         style={[styles.nextButton, !canContinue && styles.nextButtonDisabled]}
         disabled={!canContinue}
         onPress={next}
+        scaleDown={0.97}
       >
         <Text style={[styles.nextText, !canContinue && styles.nextTextDisabled]}>
           {step === 5 ? 'Analisis dengan AI' : 'Lanjut'}
         </Text>
-        <Feather name="chevron-right" size={17} color={canContinue ? colors.white : colors.warmGray} />
-      </Pressable>
+        <View style={[styles.nextArrow, !canContinue && styles.nextArrowDisabled]}>
+          <Feather name="arrow-right" size={16} color={canContinue ? colors.forest : colors.warmGray} />
+        </View>
+      </AnimatedPressable>
     </ScrollView>
   );
 }
@@ -331,14 +394,19 @@ function AnalyzingScreen({ loadingIndex }) {
   );
 }
 
-function ResultScreen({ result, onRestart, onNavigate, onProductPress, wishlist, toggleWishlist }) {
+function ResultScreen({ result, onBack, onRestart, onNavigate, onProductPress, products, wishlist, toggleWishlist }) {
   const recommended = products.slice(0, 2);
 
   return (
     <ScrollView style={layout.scroll} contentContainerStyle={layout.scrollContent} showsVerticalScrollIndicator={false}>
-      <View style={styles.resultKickerRow}>
-        <Feather name="zap" size={16} color={colors.terracotta} />
-        <Text style={styles.resultKicker}>MY CIRCULAR STYLE</Text>
+      <View style={styles.resultTopRow}>
+        <AnimatedPressable style={styles.backButton} onPress={onBack} scaleDown={0.9}>
+          <Feather name="chevron-left" size={18} color={colors.forest} />
+        </AnimatedPressable>
+        <View style={[styles.resultKickerRow, styles.resultKickerRowInline]}>
+          <Feather name="zap" size={16} color={colors.terracotta} />
+          <Text style={styles.resultKicker}>MY CIRCULAR STYLE</Text>
+        </View>
       </View>
       <Text style={styles.resultTitle}>{result.archetype}</Text>
       <Text style={styles.resultTagline}>"{result.tagline}"</Text>
@@ -446,7 +514,7 @@ function Pill({ text, danger = false, sand = false }) {
 const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 20,
-    paddingTop: 30,
+    paddingTop: 18,
     paddingBottom: 116
   },
   header: {
@@ -459,32 +527,50 @@ const styles = StyleSheet.create({
     marginBottom: 16
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.sand
+    backgroundColor: colors.sandLight,
+    borderWidth: 1.5,
+    borderColor: colors.lightGray,
+  },
+  kickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   kicker: {
     color: colors.forest,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '900',
-    letterSpacing: 1.1
+    letterSpacing: 1.2
+  },
+  stepBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 9999,
+    backgroundColor: 'rgba(47,79,58,0.09)',
+  },
+  stepBadgeText: {
+    color: colors.forest,
+    fontSize: 12,
+    fontWeight: '900',
   },
   stepText: {
     color: colors.warmGray,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 2
   },
   progressRow: {
     flexDirection: 'row',
-    gap: 6
+    gap: 5
   },
   progressBar: {
     flex: 1,
     height: 5,
-    borderRadius: 999,
+    borderRadius: 9999,
     backgroundColor: colors.lightGray
   },
   progressBarActive: {
@@ -518,8 +604,9 @@ const styles = StyleSheet.create({
     borderColor: colors.lightGray
   },
   optionCardActive: {
-    backgroundColor: 'rgba(47,79,58,0.07)',
-    borderColor: colors.forest
+    backgroundColor: 'rgba(47,79,58,0.06)',
+    borderColor: colors.forest,
+    ...shadows.sm
   },
   skinSwatch: {
     width: 38,
@@ -561,12 +648,15 @@ const styles = StyleSheet.create({
     borderColor: colors.lightGray
   },
   bodyIcon: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.sand
+    backgroundColor: colors.sandLight,
+  },
+  bodyIconActive: {
+    backgroundColor: colors.forest,
   },
   heightCard: {
     minHeight: 54,
@@ -609,25 +699,45 @@ const styles = StyleSheet.create({
     backgroundColor: colors.forest
   },
   nextButton: {
-    minHeight: 54,
+    minHeight: 56,
     borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     backgroundColor: colors.forest,
-    marginTop: 28
+    marginTop: 28,
+    ...shadows.forest,
   },
   nextButtonDisabled: {
-    backgroundColor: colors.lightGray
+    backgroundColor: colors.lightGray,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   nextText: {
     color: colors.white,
     fontSize: 15,
-    fontWeight: '900'
+    lineHeight: 20,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: -0.2,
   },
   nextTextDisabled: {
     color: colors.warmGray
+  },
+  nextArrow: {
+    position: 'absolute',
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.sand,
+  },
+  nextArrowDisabled: {
+    backgroundColor: colors.lightGrayDark,
   },
   analyzingScreen: {
     alignItems: 'center',
@@ -714,6 +824,15 @@ const styles = StyleSheet.create({
     gap: 7,
     marginBottom: 8
   },
+  resultTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 8,
+  },
+  resultKickerRowInline: {
+    marginBottom: 0,
+  },
   resultKicker: {
     color: colors.terracotta,
     fontSize: 11,
@@ -758,7 +877,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.lightGray,
     marginBottom: 14,
-    ...cardShadow
+    ...shadows.sm
   },
   resultCardHeader: {
     flexDirection: 'row',
@@ -873,32 +992,43 @@ const styles = StyleSheet.create({
     gap: 10
   },
   marketButton: {
-    minHeight: 52,
+    minHeight: 54,
     borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     backgroundColor: colors.forest,
     marginTop: 8,
-    marginBottom: 10
+    marginBottom: 10,
+    ...shadows.forest,
   },
   marketButtonText: {
     color: colors.white,
     fontSize: 15,
-    fontWeight: '900'
+    lineHeight: 20,
+    fontWeight: '900',
+    letterSpacing: -0.2,
+    textAlign: 'center',
   },
   restartButton: {
     minHeight: 48,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderWidth: 1.5,
-    borderColor: colors.forest
+    borderColor: colors.lightGray,
+    backgroundColor: colors.white,
   },
   restartButtonText: {
-    color: colors.forest,
+    color: colors.warmGray,
     fontSize: 14,
-    fontWeight: '900'
+    lineHeight: 19,
+    textAlign: 'center',
+    fontWeight: '700'
   }
 });

@@ -1,13 +1,27 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '../theme/colors';
+import { colors, shadows } from '../theme/colors';
 
-export default function MetricCard({ value, label, flat = false }) {
+/**
+ * MetricCard — displays a key metric with value, label, and optional icon.
+ *
+ * Props:
+ *  - value: string
+ *  - label: string
+ *  - icon: MaterialCommunityIcons icon name (optional)
+ *  - flat: boolean — remove background/border (for use inside cards)
+ *  - accent: boolean — highlight with forest color background
+ */
+export default function MetricCard({ value, label, icon, flat = false, accent = false }) {
   return (
-    <View style={[styles.card, flat && styles.flat]}>
-      <Text style={styles.value}>{value}</Text>
-      <Text style={styles.label}>{label}</Text>
+    <View style={[
+      styles.card,
+      flat && styles.flat,
+      accent && styles.accent,
+    ]}>
+      <Text style={[styles.value, accent && styles.valueAccent]}>{value}</Text>
+      <Text style={[styles.label, accent && styles.labelAccent]}>{label}</Text>
     </View>
   );
 }
@@ -15,27 +29,45 @@ export default function MetricCard({ value, label, flat = false }) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    minHeight: 74,
-    borderRadius: 18,
+    minHeight: 62,
+    borderRadius: 15,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 6,
     borderWidth: 1.5,
-    borderColor: colors.lightGray
+    borderColor: colors.lightGray,
+    ...shadows.sm,
   },
   flat: {
     borderWidth: 0,
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  accent: {
+    backgroundColor: colors.forest,
+    borderColor: colors.forest,
   },
   value: {
     color: colors.forest,
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 2
+    fontSize: 17,
+    fontWeight: '900',
+    lineHeight: 21,
+    marginBottom: 2,
+  },
+  valueAccent: {
+    color: colors.white,
   },
   label: {
     color: colors.warmGray,
-    fontSize: 11,
-    textAlign: 'center'
-  }
+    fontSize: 9,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 13,
+    letterSpacing: 0.2,
+  },
+  labelAccent: {
+    color: 'rgba(255,255,255,0.80)',
+  },
 });

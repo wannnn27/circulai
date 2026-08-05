@@ -1,38 +1,57 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import ProductCard from '../components/ProductCard';
-import { categories, products, sortOptions } from '../data/appData';
 import { useAppState } from '../state/AppContext';
 import { layout } from '../styles/layout';
-import { colors } from '../theme/colors';
+import { colors, shadows } from '../theme/colors';
 
-export default function ExploreScreen({ onProductPress }) {
+export default function ExploreScreen({ onProductPress, onNavigate, onBack, wishlistOnly = false }) {
   const [category, setCategory] = useState('Semua');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('Terbaru');
   const [filterOpen, setFilterOpen] = useState(false);
-  const { wishlist, toggleWishlist } = useAppState();
+  const { categories, products, sortOptions, wishlist, cart, toggleWishlist } = useAppState();
+
+  // Filter panel slide animation
+  const filterHeight = useRef(new Animated.Value(0)).current;
+  const filterOpacity = useRef(new Animated.Value(0)).current;
+
+  const toggleFilter = () => {
+    const opening = !filterOpen;
+    setFilterOpen(opening);
+    Animated.parallel([
+      Animated.spring(filterHeight, {
+        toValue: opening ? 80 : 0,
+        useNativeDriver: false,
+        speed: 16,
+        bounciness: 2,
+      }),
+      Animated.timing(filterOpacity, {
+        toValue: opening ? 1 : 0,
+        duration: 180,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
 
   const filteredProducts = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
     return products
-      .filter((product) => {
-        const categoryMatch = category === 'Semua' || product.category === category;
-        const searchMatch =
-          !normalizedQuery ||
-          product.name.toLowerCase().includes(normalizedQuery) ||
-          product.tailor.toLowerCase().includes(normalizedQuery);
-        return categoryMatch && searchMatch;
+      .filter((p) => {
+        const catMatch = category === 'Semua' || p.category === category;
+        const searchMatch = !q || p.name.toLowerCase().includes(q) || p.tailor.toLowerCase().includes(q);
+        const wishlistMatch = !wishlistOnly || wishlist.includes(p.id);
+        return catMatch && searchMatch && wishlistMatch;
       })
-      .sort((first, second) => {
-        if (sort === 'Harga Terendah') return first.price - second.price;
-        if (sort === 'Harga Tertinggi') return second.price - first.price;
-        if (sort === 'Rating') return second.rating - first.rating;
-        return first.id - second.id;
+      .sort((a, b) => {
+        if (sort === 'Harga Terendah') return a.price - b.price;
+        if (sort === 'Harga Tertinggi') return b.price - a.price;
+        if (sort === 'Rating') return b.rating - a.rating;
+        return a.id - b.id;
       });
-  }, [category, query, sort]);
+  }, [category, products, query, sort, wishlist, wishlistOnly]);
 
   return (
     <ScrollView
@@ -41,71 +60,122 @@ export default function ExploreScreen({ onProductPress }) {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
+      {/* ─── Header ─────────────────────────────────────────────────────── */}
       <View style={styles.header}>
-        <Text style={styles.title}>Circular Market</Text>
-        <View style={styles.searchRow}>
-          <View style={styles.searchBox}>
-            <Feather name="search" size={17} color={colors.warmGray} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Cari produk atau penjahit..."
-              placeholderTextColor={colors.warmGray}
-              style={styles.searchInput}
-            />
-            {!!query && (
-              <Pressable onPress={() => setQuery('')} hitSlop={8}>
-                <Feather name="x" size={17} color={colors.warmGray} />
-              </Pressable>
-            )}
+        <View style={styles.headerTitleRow}>
+          {wishlistOnly && (
+            <Pressable style={styles.headerBack} onPress={onBack}>
+              <Feather name="chevron-left" size={18} color={colors.forest} />
+            </Pressable>
+          )}
+          <View>
+            <Text style={styles.kicker}>{wishlistOnly ? 'Koleksi tersimpan' : 'Temukan'}</Text>
+            <Text style={styles.title}>{wishlistOnly ? 'Wishlist Saya' : 'Circular Market'}</Text>
           </View>
-          <Pressable
-            style={[styles.filterButton, filterOpen && styles.filterButtonActive]}
-            onPress={() => setFilterOpen((current) => !current)}
-          >
-            <Feather name="sliders" size={17} color={filterOpen ? colors.white : colors.forest} />
-          </Pressable>
         </View>
+        <Pressable style={styles.headerCart} onPress={() => onNavigate('cart')}>
+          <Feather name="shopping-bag" size={17} color={colors.forest} />
+          <Text style={styles.headerBadgeText}>{cart.length}</Text>
+        </Pressable>
       </View>
 
-      {filterOpen && (
-        <View style={styles.filterPanel}>
-          <Text style={styles.filterTitle}>Urutkan</Text>
-          <View style={styles.sortRow}>
-            {sortOptions.map((item) => (
-              <Pressable
-                key={item}
-                style={[styles.sortChip, sort === item && styles.sortChipActive]}
-                onPress={() => setSort(item)}
-              >
-                <Text style={[styles.sortText, sort === item && styles.sortTextActive]}>{item}</Text>
-              </Pressable>
-            ))}
-          </View>
+      {/* ─── Search + Filter row ────────────────────────────────────────── */}
+      <View style={styles.searchRow}>
+        <View style={styles.searchBox}>
+          <Feather name="search" size={16} color={colors.warmGray} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Cari produk atau penjahit..."
+            placeholderTextColor={colors.warmGrayLight}
+            style={styles.searchInput}
+          />
+          {!!query && (
+            <Pressable onPress={() => setQuery('')} hitSlop={8}>
+              <View style={styles.clearButton}>
+                <Feather name="x" size={12} color={colors.warmGray} />
+              </View>
+            </Pressable>
+          )}
         </View>
-      )}
+        <Pressable
+          style={[styles.filterButton, filterOpen && styles.filterButtonActive]}
+          onPress={toggleFilter}
+        >
+          <Feather name="sliders" size={16} color={filterOpen ? colors.white : colors.forest} />
+        </Pressable>
+      </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+      {/* ─── Animated filter panel ──────────────────────────────────────── */}
+      <Animated.View style={[styles.filterPanel, { maxHeight: filterHeight, opacity: filterOpacity }]}>
+        <Text style={styles.filterTitle}>Urutkan berdasarkan</Text>
+        <View style={styles.sortRow}>
+          {sortOptions.map((item) => (
+            <Pressable
+              key={item}
+              style={[styles.sortChip, sort === item && styles.sortChipActive]}
+              onPress={() => setSort(item)}
+            >
+              <Text style={[styles.sortText, sort === item && styles.sortTextActive]}>
+                {item}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </Animated.View>
+
+      {/* ─── Category chips ─────────────────────────────────────────────── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryRow}
+      >
         {categories.map((item) => (
           <Pressable
             key={item}
-            style={[styles.categoryChip, category === item && styles.categoryChipActive]}
+            style={[styles.chip, category === item && styles.chipActive]}
             onPress={() => setCategory(item)}
           >
-            <Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>{item}</Text>
+            <Text style={[styles.chipText, category === item && styles.chipTextActive]}>
+              {item}
+            </Text>
           </Pressable>
         ))}
       </ScrollView>
 
-      <Text style={styles.resultText}>{filteredProducts.length} produk ditemukan</Text>
+      {/* ─── Result count ───────────────────────────────────────────────── */}
+      <View style={styles.resultRow}>
+        <View style={styles.resultBadge}>
+          <Text style={styles.resultText}>{filteredProducts.length} produk</Text>
+        </View>
+        {query !== '' && (
+          <Text style={styles.resultQuery}>untuk "{query}"</Text>
+        )}
+      </View>
 
+      {/* ─── Product grid or empty state ────────────────────────────────── */}
       {filteredProducts.length === 0 ? (
         <View style={styles.emptyState}>
-          <View style={styles.emptyIcon}>
-            <MaterialCommunityIcons name="tshirt-crew-outline" size={32} color={colors.forest} />
+          <View style={styles.emptyIconBg}>
+            <MaterialCommunityIcons name="tshirt-crew-outline" size={36} color={colors.forest} />
           </View>
-          <Text style={styles.emptyTitle}>Produk tidak ditemukan</Text>
-          <Text style={styles.emptyDesc}>Coba kata kunci atau kategori lain</Text>
+          <Text style={styles.emptyTitle}>{wishlistOnly ? 'Wishlist masih kosong' : 'Produk tidak ditemukan'}</Text>
+          <Text style={styles.emptyDesc}>
+            {wishlistOnly ? 'Simpan produk favoritmu agar muncul di sini' : 'Coba kata kunci atau kategori lain'}
+          </Text>
+          <Pressable
+            style={styles.emptyReset}
+            onPress={() => {
+              if (wishlistOnly) {
+                onNavigate('explore');
+                return;
+              }
+              setQuery('');
+              setCategory('Semua');
+            }}
+          >
+            <Text style={styles.emptyResetText}>{wishlistOnly ? 'Jelajahi Produk' : 'Reset Filter'}</Text>
+          </Pressable>
         </View>
       ) : (
         <View style={styles.grid}>
@@ -126,18 +196,65 @@ export default function ExploreScreen({ onProductPress }) {
 }
 
 const styles = StyleSheet.create({
+  // ─── Header ───────────────────────────────────────────────────────────────
   header: {
-    marginBottom: 14
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerBack: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+  },
+  kicker: {
+    color: colors.warmGray,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 2,
   },
   title: {
     color: colors.charcoal,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '900',
-    marginBottom: 16
+    letterSpacing: -0.5,
   },
+  headerCart: {
+    minWidth: 46,
+    height: 40,
+    paddingHorizontal: 11,
+    flexDirection: 'row',
+    gap: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 13,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+  },
+  headerBadgeText: {
+    color: colors.forest,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  // ─── Search ───────────────────────────────────────────────────────────────
   searchRow: {
     flexDirection: 'row',
-    gap: 9
+    gap: 9,
+    marginBottom: 14,
   },
   searchBox: {
     flex: 1,
@@ -149,13 +266,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    gap: 9
+    gap: 9,
+    ...shadows.sm,
   },
   searchInput: {
     flex: 1,
     color: colors.charcoal,
     fontSize: 14,
-    paddingVertical: 0
+    paddingVertical: 0,
+    fontWeight: '500',
+  },
+  clearButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.lightGray,
   },
   filterButton: {
     width: 50,
@@ -165,103 +292,146 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.white,
     borderWidth: 1.5,
-    borderColor: colors.lightGray
+    borderColor: colors.lightGray,
+    ...shadows.sm,
   },
   filterButtonActive: {
     backgroundColor: colors.forest,
-    borderColor: colors.forest
+    borderColor: colors.forest,
   },
+  // ─── Filter panel ─────────────────────────────────────────────────────────
   filterPanel: {
-    borderRadius: 20,
-    padding: 14,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.lightGray,
-    marginBottom: 14
+    overflow: 'hidden',
+    marginBottom: 8,
   },
   filterTitle: {
     color: colors.charcoal,
-    fontSize: 13,
-    fontWeight: '900',
-    marginBottom: 10
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 8,
+    letterSpacing: 0.2,
   },
   sortRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8
+    gap: 7,
   },
   sortChip: {
-    borderRadius: 999,
+    borderRadius: 9999,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.sand
+    paddingVertical: 7,
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.lightGray,
   },
   sortChipActive: {
-    backgroundColor: colors.forest
+    backgroundColor: colors.forest,
+    borderColor: colors.forest,
   },
   sortText: {
     color: colors.charcoal,
     fontSize: 12,
-    fontWeight: '700'
+    fontWeight: '700',
   },
   sortTextActive: {
-    color: colors.white
+    color: colors.white,
   },
+  // ─── Categories ───────────────────────────────────────────────────────────
   categoryRow: {
     gap: 8,
-    paddingBottom: 16
+    paddingBottom: 14,
   },
-  categoryChip: {
-    borderRadius: 999,
+  chip: {
+    borderRadius: 9999,
     paddingHorizontal: 15,
     paddingVertical: 9,
-    backgroundColor: colors.sand
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.lightGray,
   },
-  categoryChipActive: {
-    backgroundColor: colors.forest
+  chipActive: {
+    backgroundColor: colors.forest,
+    borderColor: colors.forest,
   },
-  categoryText: {
+  chipText: {
     color: colors.charcoal,
     fontSize: 13,
-    fontWeight: '600'
+    fontWeight: '600',
   },
-  categoryTextActive: {
+  chipTextActive: {
     color: colors.white,
-    fontWeight: '900'
+    fontWeight: '800',
+  },
+  // ─── Result ───────────────────────────────────────────────────────────────
+  resultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14,
+  },
+  resultBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    backgroundColor: colors.successLight,
   },
   resultText: {
-    color: colors.warmGray,
-    fontSize: 13,
-    marginBottom: 12
+    color: colors.success,
+    fontSize: 11,
+    fontWeight: '800',
   },
+  resultQuery: {
+    color: colors.warmGray,
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  // ─── Grid ─────────────────────────────────────────────────────────────────
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: 10
+    rowGap: 16,
   },
+  // ─── Empty state ──────────────────────────────────────────────────────────
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60
+    paddingVertical: 60,
   },
-  emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  emptyIconBg: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.sand,
-    marginBottom: 14
+    marginBottom: 18,
   },
   emptyTitle: {
     color: colors.charcoal,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '900',
-    marginBottom: 6
+    marginBottom: 6,
   },
   emptyDesc: {
     color: colors.warmGray,
-    fontSize: 13
-  }
+    fontSize: 13,
+    marginBottom: 20,
+  },
+  emptyReset: {
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 22,
+    paddingVertical: 12,
+    borderRadius: 15,
+    backgroundColor: colors.forest,
+  },
+  emptyResetText: {
+    color: colors.white,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
 });

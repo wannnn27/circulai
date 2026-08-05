@@ -4,7 +4,11 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.env
+server/.env
+server/data/store.json
 web-build
+dist/
 **/ios/Pods
 **/android/app/build
 **/android/.gradle

@@ -146,6 +146,9 @@ export const tailors = [
     specialty: 'Blouse, Outer, Casual Wear',
     rating: 4.9,
     sold: 284,
+    experience: '9 tahun',
+    responseTime: '< 15 menit',
+    verified: true,
     image: 'https://images.unsplash.com/photo-1673201229733-69d19c5c4a87?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500'
   },
   {
@@ -155,6 +158,9 @@ export const tailors = [
     specialty: 'Dress, Kebaya Modern',
     rating: 4.8,
     sold: 196,
+    experience: '7 tahun',
+    responseTime: '< 20 menit',
+    verified: true,
     image: 'https://images.unsplash.com/photo-1457972657980-4c9fddebec8d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500'
   },
   {
@@ -164,18 +170,129 @@ export const tailors = [
     specialty: 'Batik Modern, Casual',
     rating: 4.7,
     sold: 312,
+    experience: '11 tahun',
+    responseTime: '< 10 menit',
+    verified: true,
     image: 'https://images.unsplash.com/photo-1578353022142-09264fd64295?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500'
+  },
+  {
+    id: 4,
+    name: 'Jogja Atelier',
+    city: 'Yogyakarta',
+    specialty: 'Outer, Tenun, Layering',
+    rating: 4.8,
+    sold: 228,
+    experience: '8 tahun',
+    responseTime: '< 20 menit',
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500'
   }
 ];
 
 export const orderSteps = [
-  { id: 'received', label: 'Pesanan Diterima', desc: 'Penjahit menerima orderanmu' },
-  { id: 'confirmed', label: 'Desain Dikonfirmasi', desc: 'Detail dan ukuran disetujui' },
-  { id: 'material', label: 'Bahan Disiapkan', desc: 'Kain dipotong sesuai ukuran' },
-  { id: 'sewing', label: 'Proses Jahit', desc: 'Sedang dijahit oleh penjahit' },
-  { id: 'qc', label: 'Quality Control', desc: 'Pengecekan kualitas akhir' },
-  { id: 'shipped', label: 'Dikirim', desc: 'Paket dalam perjalanan' }
+  { id: 'WAITING_PAYMENT', label: 'Menunggu Pembayaran', desc: 'Selesaikan pembayaran sebelum batas waktu', estimate: 'Maks. 24 jam' },
+  { id: 'PAYMENT_CONFIRMED', label: 'Pembayaran Dikonfirmasi', desc: 'Pembayaran diterima dan detail diteruskan ke tailor', estimate: '< 1 hari' },
+  { id: 'IN_PRODUCTION', label: 'Sedang Diproduksi', desc: 'Tailor sedang memotong dan menjahit pakaianmu', estimate: '5-10 hari' },
+  { id: 'QUALITY_CHECK', label: 'Quality Check', desc: 'Ukuran, jahitan, dan hasil akhir sedang diperiksa', estimate: '1-2 hari' },
+  { id: 'SHIPPED', label: 'Dikirim', desc: 'Paket sedang dalam perjalanan ke alamatmu', estimate: '2-4 hari' },
+  { id: 'DELIVERED', label: 'Sudah Diterima', desc: 'Paket telah sampai dan menunggu konfirmasi', estimate: 'Konfirmasi penerimaan' },
+  { id: 'COMPLETED', label: 'Pesanan Selesai', desc: 'Pesanan selesai dan passport telah aktif', estimate: 'Selesai' }
 ];
+
+export const customizationColors = [
+  { id: 'olive', label: 'Olive Earth', hex: '#7D8C55', recommended: true },
+  { id: 'terracotta', label: 'Terracotta', hex: '#C97B63', recommended: true },
+  { id: 'sand', label: 'Natural Sand', hex: '#E8DCC8', recommended: false },
+  { id: 'forest', label: 'Forest Green', hex: '#2F4F3A', recommended: true },
+  { id: 'charcoal', label: 'Charcoal', hex: '#3A3D38', recommended: false }
+];
+
+export const customizationFabrics = [
+  { id: 'rayon', label: 'Rayon Atelier Sisa', desc: 'Adem, ringan, dan flowy', extraCost: 0 },
+  { id: 'linen', label: 'Linen Deadstock', desc: 'Tekstur premium dan tahan lama', extraCost: 35000 },
+  { id: 'tenun', label: 'Tenun Rayon Scraps', desc: 'Motif unik dari serat sisa', extraCost: 50000 }
+];
+
+export const savedAddresses = [
+  {
+    id: 'ADDR-001',
+    label: 'Rumah',
+    receiver: 'Adi Arwan Syah',
+    phone: '0812 3456 7890',
+    detail: 'Jl. Kaliurang KM 7, Sleman, Yogyakarta 55581'
+  },
+  {
+    id: 'ADDR-002',
+    label: 'Kantor',
+    receiver: 'Adi Arwan Syah',
+    phone: '0812 3456 7890',
+    detail: 'Jl. Gejayan No. 18, Depok, Sleman, Yogyakarta 55281'
+  }
+];
+
+export const paymentMethods = [
+  { id: 'MIDTRANS_SNAP', label: 'Midtrans Checkout', desc: 'QRIS, e-wallet, kartu, dan virtual account', icon: 'credit-card' },
+  { id: 'QRIS', label: 'QRIS', desc: 'Scan dengan aplikasi pembayaran apa pun', icon: 'maximize' },
+  { id: 'GOPAY', label: 'GoPay', desc: 'Bayar langsung melalui GoPay', icon: 'smartphone' },
+  { id: 'BANK_TRANSFER', label: 'Transfer Bank / Virtual Account', desc: 'BCA Virtual Account', icon: 'credit-card' }
+];
+
+export const orderStatusTransitions = {
+  WAITING_PAYMENT: ['PAYMENT_CONFIRMED'],
+  PAYMENT_CONFIRMED: ['IN_PRODUCTION'],
+  IN_PRODUCTION: ['QUALITY_CHECK'],
+  QUALITY_CHECK: ['SHIPPED'],
+  SHIPPED: ['DELIVERED'],
+  DELIVERED: ['COMPLETED'],
+  COMPLETED: []
+};
+
+export const orderStatusActors = {
+  PAYMENT_CONFIRMED: ['payment_gateway'],
+  IN_PRODUCTION: ['tailor'],
+  QUALITY_CHECK: ['tailor'],
+  SHIPPED: ['tailor', 'courier'],
+  DELIVERED: ['courier'],
+  COMPLETED: ['customer']
+};
+
+export const returnReasons = [
+  {
+    id: 'wrong_size',
+    label: 'Ukuran tidak sesuai',
+    desc: 'Fit terlalu besar/kecil dari ukuran pesanan.'
+  },
+  {
+    id: 'wrong_item',
+    label: 'Produk tidak sesuai',
+    desc: 'Model, warna, atau detail berbeda dari pesanan.'
+  },
+  {
+    id: 'defect',
+    label: 'Ada cacat produksi',
+    desc: 'Jahitan, noda, atau kerusakan saat diterima.'
+  },
+  {
+    id: 'other',
+    label: 'Alasan lain',
+    desc: 'Jelaskan kondisi produk melalui catatan tambahan.'
+  }
+];
+
+export const returnStatusMeta = {
+  REVIEWING: {
+    label: 'Dalam Review',
+    desc: 'Tim CIRCULAI sedang memverifikasi foto bukti dan alasan pengembalian.'
+  },
+  APPROVED: {
+    label: 'Disetujui',
+    desc: 'Pengembalian disetujui. Tim akan mengirim instruksi pengiriman balik.'
+  },
+  REJECTED: {
+    label: 'Ditolak',
+    desc: 'Pengajuan belum memenuhi syarat retur berdasarkan verifikasi.'
+  }
+};
 
 export const initialOrders = [
   {
@@ -185,7 +302,7 @@ export const initialOrders = [
     tailor: 'Rahayu Tailor',
     tailorCity: 'Sleman, Yogyakarta',
     price: 'Rp189.000',
-    status: 'sewing',
+    status: 'IN_PRODUCTION',
     eta: '7 Juni 2026',
     image: products[0].image,
     badges: ['Made-to-Order', 'Kain Sisa'],
@@ -198,8 +315,8 @@ export const initialOrders = [
     tailor: 'Kartika Studio',
     tailorCity: 'Bandung',
     price: 'Rp245.000',
-    status: 'shipped',
-    eta: 'Sudah dikirim',
+    status: 'DELIVERED',
+    eta: 'Sudah diterima',
     image: products[1].image,
     badges: ['Made-to-Order'],
     savedFabric: '1.0m'
@@ -248,7 +365,8 @@ export const profileGroups = [
     items: [
       { icon: 'zap', label: 'My Circular Style', desc: 'Profil gaya personalmu', badge: 'Warm Earth' },
       { icon: 'heart', label: 'Wishlist', desc: 'Produk yang kamu simpan', badge: '4' },
-      { icon: 'maximize-2', label: 'Ukuran Tersimpan', desc: 'Data ukuran untuk custom order' }
+      { icon: 'maximize-2', label: 'Ukuran Tersimpan', desc: 'Data ukuran untuk custom order' },
+      { icon: 'refresh-cw', label: 'Circular Exchange', desc: 'Tukar barang bekas jadi poin' }
     ]
   },
   {
@@ -269,30 +387,501 @@ export const profileGroups = [
   }
 ];
 
+// ─── Circular Exchange Data ───────────────────────────────────────────────────
+
+export const exchangeItemTypes = [
+  {
+    id: 'kain_perca',
+    label: 'Kain Perca',
+    desc: 'Sisa kain dari penjahit atau produksi',
+    icon: 'scissors-cutting',
+    unit: 'kg',
+    pointsPerUnit: 120,
+    minUnit: 0.2,
+    color: '#7D8C55',
+    acceptedConditions: ['Bersih', 'Kering', 'Berbagai jenis kain']
+  },
+  {
+    id: 'baju_bekas',
+    label: 'Baju Bekas',
+    desc: 'Pakaian layak pakai yang tidak terpakai',
+    icon: 'tshirt-crew-outline',
+    unit: 'pcs',
+    pointsPerUnit: 80,
+    minUnit: 1,
+    color: '#C97B63',
+    acceptedConditions: ['Kondisi baik', 'Tidak sobek besar', 'Sudah dicuci']
+  },
+  {
+    id: 'denim',
+    label: 'Denim & Jeans',
+    desc: 'Celana jeans atau jaket denim bekas',
+    icon: 'layers-outline',
+    unit: 'pcs',
+    pointsPerUnit: 150,
+    minUnit: 1,
+    color: '#31485B',
+    acceptedConditions: ['Bersih', 'Minimal kerusakan', 'Jahitan utuh']
+  },
+  {
+    id: 'outer_jaket',
+    label: 'Outer & Jaket',
+    desc: 'Outer, blazer, atau jaket bekas',
+    icon: 'hanger',
+    unit: 'pcs',
+    pointsPerUnit: 200,
+    minUnit: 1,
+    color: '#8E6F5A',
+    acceptedConditions: ['Kondisi dapat dipakai', 'Resleting berfungsi']
+  },
+  {
+    id: 'kain_tenun',
+    label: 'Kain Tenun & Batik',
+    desc: 'Kain tenun tradisional atau batik',
+    icon: 'palette-outline',
+    unit: 'meter',
+    pointsPerUnit: 180,
+    minUnit: 0.5,
+    color: '#C97B63',
+    acceptedConditions: ['Motif masih jelas', 'Tidak sobek parah', 'Bersih']
+  },
+  {
+    id: 'aksesoris',
+    label: 'Aksesoris Fashion',
+    desc: 'Tas, ikat pinggang, syal, atau aksesori kain',
+    icon: 'bag-personal-outline',
+    unit: 'pcs',
+    pointsPerUnit: 60,
+    minUnit: 1,
+    color: '#D99A3D',
+    acceptedConditions: ['Kondisi layak pakai', 'Bersih']
+  }
+];
+
+export const pointRedemptionOptions = [
+  {
+    id: 'disc_10k',
+    label: 'Diskon Rp10.000',
+    desc: 'Potongan langsung untuk pembelian berikutnya',
+    pointCost: 100,
+    value: 10000,
+    type: 'discount',
+    icon: 'tag-outline',
+    minPurchase: 100000,
+    validDays: 30
+  },
+  {
+    id: 'disc_25k',
+    label: 'Diskon Rp25.000',
+    desc: 'Potongan untuk pembelian min. Rp200.000',
+    pointCost: 250,
+    value: 25000,
+    type: 'discount',
+    icon: 'tag-multiple-outline',
+    minPurchase: 200000,
+    validDays: 30
+  },
+  {
+    id: 'disc_50k',
+    label: 'Diskon Rp50.000',
+    desc: 'Potongan untuk pembelian min. Rp350.000',
+    pointCost: 500,
+    value: 50000,
+    type: 'discount',
+    icon: 'sale',
+    minPurchase: 350000,
+    validDays: 30
+  },
+  {
+    id: 'free_ongkir',
+    label: 'Gratis Ongkos Kirim',
+    desc: 'Gratis ongkir untuk 1x pembelian',
+    pointCost: 150,
+    value: 18000,
+    type: 'shipping',
+    icon: 'truck-outline',
+    minPurchase: 0,
+    validDays: 14
+  },
+  {
+    id: 'disc_100k',
+    label: 'Diskon Rp100.000',
+    desc: 'Potongan besar untuk pembelian min. Rp500.000',
+    pointCost: 1000,
+    value: 100000,
+    type: 'discount',
+    icon: 'crown-outline',
+    minPurchase: 500000,
+    validDays: 60
+  }
+];
+
+export const donationPartners = [
+  {
+    id: 'rumah_jahit',
+    name: 'Rumah Jahit Sosial',
+    location: 'Yogyakarta',
+    desc: 'Program pelatihan menjahit untuk ibu rumah tangga kurang mampu',
+    icon: 'home-heart',
+    beneficiaries: '124 penerima manfaat',
+    color: '#2F4F3A'
+  },
+  {
+    id: 'desa_binaan',
+    name: 'Desa Binaan CIRCULAI',
+    location: 'Klaten, Jawa Tengah',
+    desc: 'Pemberdayaan pengrajin tenun tradisional di pedesaan',
+    icon: 'account-group-outline',
+    beneficiaries: '38 pengrajin',
+    color: '#7D8C55'
+  },
+  {
+    id: 'komunitas_peduli',
+    name: 'Komunitas Peduli Lingkungan',
+    location: 'Bandung',
+    desc: 'Daur ulang kain bekas menjadi produk bernilai jual',
+    icon: 'recycle',
+    beneficiaries: '67 anggota komunitas',
+    color: '#31485B'
+  },
+  {
+    id: 'pondok_pesantren',
+    name: 'Pondok Pesantren Al-Barokah',
+    location: 'Solo, Jawa Tengah',
+    desc: 'Program keterampilan menjahit untuk santri',
+    icon: 'school-outline',
+    beneficiaries: '215 santri',
+    color: '#C97B63'
+  }
+];
+
+export const exchangePointTiers = [
+  { name: 'Seed', minPoints: 0, maxPoints: 199, color: '#A8A89F', icon: 'seed-outline' },
+  { name: 'Green', minPoints: 200, maxPoints: 499, color: '#4F8A5B', icon: 'leaf' },
+  { name: 'Emerald', minPoints: 500, maxPoints: 999, color: '#2F4F3A', icon: 'diamond-stone' },
+  { name: 'Circular', minPoints: 1000, maxPoints: Infinity, color: '#C97B63', icon: 'recycle' }
+];
+
+export function getPointTier(points) {
+  return exchangePointTiers.find((tier) => points >= tier.minPoints && points <= tier.maxPoints)
+    ?? exchangePointTiers[0];
+}
+
+export function calcExchangePoints(itemTypeId, quantity) {
+  const type = exchangeItemTypes.find((t) => t.id === itemTypeId);
+  if (!type || quantity < type.minUnit) return 0;
+  return Math.floor(type.pointsPerUnit * quantity);
+}
+
+// ─── Utility Functions ────────────────────────────────────────────────────────
+
 export function formatCurrency(value) {
-  return `Rp${value.toLocaleString('id-ID').replace(/,/g, '.')}`;
+  if (value === null || value === undefined) return 'Rp0';
+  let numStr = String(value).replace(/[^0-9]/g, '');
+  if (!numStr) return 'Rp0';
+  const num = parseInt(numStr, 10);
+  const formatted = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `Rp${formatted}`;
 }
 
 export function orderStatusIndex(status) {
   return Math.max(0, orderSteps.findIndex((step) => step.id === status));
 }
 
-export function createOrderFromProduct(product, count) {
-  const suffix = String(count + 1).padStart(3, '0');
+export function getTailorByName(name) {
+  return tailors.find((tailor) => tailor.name === name) ?? {
+    name,
+    city: 'Indonesia',
+    specialty: 'Made-to-order fashion',
+    rating: 4.8,
+    sold: 0,
+    experience: 'Berpengalaman',
+    responseTime: '< 30 menit',
+    verified: true,
+    image: null
+  };
+}
+
+function formatOrderDate(value = new Date()) {
+  return new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(value);
+}
+
+function createPassportHash(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0').toUpperCase();
+}
+
+function formatImpact(savedFabric) {
+  const fabricAmount = parseFloat(savedFabric ?? '0');
+  const safeAmount = Number.isNaN(fabricAmount) ? 0 : fabricAmount;
+  return {
+    savedFabric: `${safeAmount.toFixed(1)}m`,
+    estimatedCo2: `${(safeAmount * 2.7).toFixed(1)} kg`,
+    localMakerCount: 1
+  };
+}
+
+export function createProductPassport({
+  orderId,
+  product,
+  unitIndex = 1,
+  material,
+  tailor,
+  tailorCity,
+  savedFabric,
+  issuedAt,
+  orderStatus
+}) {
+  const orderCode = String(orderId ?? 'ORD-000').replace(/\D/g, '').padStart(3, '0');
+  const productCode = String(product?.id ?? createPassportHash(product?.name ?? 'PRODUCT').slice(0, 3)).padStart(3, '0');
+  const unitCode = String(unitIndex).padStart(2, '0');
+  const seedSource = [
+    orderId,
+    product?.id,
+    product?.name,
+    unitIndex,
+    material,
+    tailor,
+    tailorCity,
+    issuedAt
+  ].join('|');
+  const verificationCode = createPassportHash(seedSource);
+  const active = orderStatus === 'COMPLETED';
 
   return {
-    id: `ORD-${suffix}`,
-    productId: product.id,
-    product: product.name,
+    id: `CPP-${orderCode}-${productCode}-${unitCode}`,
+    serialNumber: `CRL-${verificationCode.slice(0, 4)}-${verificationCode.slice(4)}`,
+    verificationCode,
+    qrSeed: parseInt(verificationCode, 16),
+    status: active ? 'ACTIVE' : 'PENDING',
+    verification: active ? 'Passport aktif & terverifikasi' : 'Aktif setelah pesanan selesai',
+    productId: product?.id,
+    productName: product?.name ?? 'Produk CIRCULAI',
+    image: product?.image,
+    materialOrigin: material ?? product?.material ?? 'Material lokal pilihan',
+    tailor,
+    productionLocation: tailorCity,
+    impact: formatImpact(savedFabric ?? product?.savedFabric),
+    issuedAt,
+    activatedAt: active ? issuedAt : null
+  };
+}
+
+export function createOrderFromProduct(product, count, checkout = {}) {
+  const suffix = String(count + 1).padStart(3, '0');
+  const orderId = `ORD-${suffix}`;
+  const tailorProfile = getTailorByName(product.tailor);
+  const createdAt = new Date();
+  const orderType = product.orderType ?? (product.design ? 'custom' : 'catalog');
+  const customization = product.customization ?? {};
+  const total = checkout.total ?? product.price;
+  const address = checkout.address ?? savedAddresses[0];
+  const paymentMethod = checkout.paymentMethod ?? paymentMethods[0];
+  const paymentExpiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000).toISOString();
+  const issuedAt = formatOrderDate(createdAt);
+  const passport = createProductPassport({
+    orderId,
+    product,
+    material: customization.fabric?.label ?? product.material ?? 'Material lokal pilihan',
     tailor: product.tailor,
     tailorCity: product.tailorCity,
-    price: formatCurrency(product.price),
-    status: 'received',
+    savedFabric: product.savedFabric,
+    issuedAt,
+    orderStatus: 'WAITING_PAYMENT'
+  });
+
+  return {
+    id: orderId,
+    orderType,
+    productId: product.id,
+    product: product.name,
+    description: product.description,
+    tailor: product.tailor,
+    tailorCity: product.tailorCity,
+    tailorProfile,
+    price: formatCurrency(total),
+    rawPrice: total,
+    status: 'WAITING_PAYMENT',
+    statusHistory: [
+      {
+        status: 'WAITING_PAYMENT',
+        label: formatOrderDate(createdAt),
+        note: 'Pesanan dibuat dan menunggu pembayaran',
+        actor: 'system'
+      }
+    ],
     eta: product.eta,
+    placedAt: createdAt.toISOString(),
+    placedAtLabel: formatOrderDate(createdAt),
     image: product.image,
-    badges: product.badges,
-    savedFabric: product.savedFabric
+    badges: product.badges ?? [],
+    savedFabric: product.savedFabric,
+    material: customization.fabric?.label ?? product.material ?? 'Material lokal pilihan',
+    color: customization.color?.label ?? product.color,
+    size: customization.sizeType === 'custom' ? 'Custom measurements' : customization.size ?? product.size ?? 'M',
+    measurements: customization.measurements ?? null,
+    notes: product.notes?.trim() || 'Tidak ada catatan khusus',
+    design: product.design ?? null,
+    shippingAddress: `${address.receiver}, ${address.detail}`,
+    address,
+    paymentMethod,
+    paymentData: {
+      bankName: paymentMethod.id === 'BANK_TRANSFER' ? 'BCA Virtual Account' : paymentMethod.label,
+      vaNumber: paymentMethod.id === 'BANK_TRANSFER' ? `8808${suffix}2026` : null,
+      amount: formatCurrency(total),
+      expiresAt: paymentExpiresAt
+    },
+    courier: 'CIRCULAI Delivery',
+    trackingCode: `CRL-${suffix}-ID`,
+    shipmentStatus: 'Menunggu proses produksi',
+    passport,
+    passports: [passport]
   };
+}
+
+export function createOrderFromCart(items, count, checkout) {
+  const firstItem = items[0];
+  const tailorNames = [...new Set(items.map((item) => item.product.tailor))];
+  const tailorProfiles = tailorNames.map(getTailorByName);
+  const multipleTailors = tailorProfiles.length > 1;
+  const materials = [...new Set(items.map((item) => item.customization?.fabric?.label ?? item.product.material).filter(Boolean))];
+  const savedFabricTotal = items.reduce((sum, item) => {
+    const amount = parseFloat(item.product.savedFabric ?? '0');
+    return sum + (Number.isNaN(amount) ? 0 : amount * item.quantity);
+  }, 0);
+  const product = {
+    ...firstItem.product,
+    customization: firstItem.customization,
+    size: firstItem.customization?.size,
+    notes: firstItem.customization?.notes ?? firstItem.product.notes,
+    orderType: firstItem.product.orderType ?? 'catalog'
+  };
+  const order = createOrderFromProduct(product, count, checkout);
+  let passportIndex = 0;
+  const passports = items.flatMap((item) =>
+    Array.from({ length: item.quantity }, () => {
+      passportIndex += 1;
+      return createProductPassport({
+        orderId: order.id,
+        product: item.product,
+        unitIndex: passportIndex,
+        material: item.customization?.fabric?.label ?? item.product.material,
+        tailor: item.product.tailor,
+        tailorCity: item.product.tailorCity,
+        savedFabric: item.product.savedFabric,
+        issuedAt: order.passport.issuedAt,
+        orderStatus: order.status
+      });
+    })
+  );
+
+  return {
+    ...order,
+    items,
+    itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    tailor: multipleTailors ? `${tailorProfiles.length} tailor lokal` : order.tailor,
+    tailorCity: multipleTailors ? 'Beberapa lokasi produksi' : order.tailorCity,
+    tailorProfiles,
+    material: materials.join(', '),
+    savedFabric: `${savedFabricTotal.toFixed(1)}m`,
+    product: items.length > 1 ? `${firstItem.product.name} + ${items.length - 1} produk` : firstItem.product.name,
+    description: `${items.reduce((sum, item) => sum + item.quantity, 0)} item made-to-order dari checkout CIRCULAI`,
+    passport: passports[0],
+    passports
+  };
+}
+
+export function normalizeOrder(order) {
+  const sourceProduct = products.find((product) => product.id === order.productId);
+  const fallback = sourceProduct ?? {};
+  const suffix = String(order.id ?? 'ORD-000').replace(/\D/g, '').padStart(3, '0');
+  const tailorProfile = getTailorByName(order.tailor ?? fallback.tailor);
+  const material = order.material ?? fallback.material ?? 'Material lokal pilihan';
+
+  const legacyStatusMap = {
+    received: 'WAITING_PAYMENT',
+    confirmed: 'PAYMENT_CONFIRMED',
+    material: 'IN_PRODUCTION',
+    sewing: 'IN_PRODUCTION',
+    qc: 'QUALITY_CHECK',
+    shipped: 'SHIPPED'
+  };
+  const normalizedStatus = legacyStatusMap[order.status] ?? order.status ?? 'WAITING_PAYMENT';
+  const generatedPassport = createProductPassport({
+    orderId: order.id,
+    product: {
+      id: order.productId ?? fallback.id,
+      name: order.product ?? fallback.name,
+      image: order.image ?? fallback.image,
+      material,
+      savedFabric: order.savedFabric ?? fallback.savedFabric
+    },
+    material,
+    tailor: order.tailor ?? fallback.tailor,
+    tailorCity: order.tailorCity ?? fallback.tailorCity,
+    savedFabric: order.savedFabric ?? fallback.savedFabric,
+    issuedAt: order.passport?.issuedAt ?? '4 Juni 2026',
+    orderStatus: normalizedStatus
+  });
+  const passports = order.passports?.length
+    ? order.passports.map((passport) => ({
+        ...passport,
+        status: normalizedStatus === 'COMPLETED' ? 'ACTIVE' : passport.status ?? 'PENDING'
+      }))
+    : [{ ...generatedPassport, ...(order.passport ?? {}) }];
+
+  return {
+    orderType: 'catalog',
+    description: fallback.description,
+    rawPrice: fallback.price,
+    placedAt: '2026-06-04T08:00:00.000Z',
+    placedAtLabel: '4 Juni 2026',
+    material,
+    size: 'M',
+    notes: 'Tidak ada catatan khusus',
+    design: null,
+    shippingAddress: 'Adi Arwan Syah, Sleman, Yogyakarta',
+    courier: 'CIRCULAI Delivery',
+    trackingCode: `CRL-${suffix}-ID`,
+    status: normalizedStatus,
+    statusHistory: order.statusHistory ?? [
+      { status: normalizedStatus, label: '4 Juni 2026', note: 'Status terakhir pesanan', actor: 'system' }
+    ],
+    shipmentStatus: normalizedStatus === 'SHIPPED' ? 'Paket dalam perjalanan' : 'Menunggu pengiriman',
+    ...order,
+    status: normalizedStatus,
+    tailorProfile: order.tailorProfile ?? tailorProfile,
+    passport: passports[0],
+    passports
+  };
+}
+
+export function getOrderTimeline(order) {
+  const currentIndex = orderStatusIndex(order.status);
+
+  return orderSteps.map((step, index) => ({
+    ...step,
+    state: index < currentIndex ? 'completed' : index === currentIndex ? 'current' : 'upcoming'
+  }));
+}
+
+export function canTransitionOrderStatus(currentStatus, nextStatus, actor) {
+  const validNextStatus = orderStatusTransitions[currentStatus]?.includes(nextStatus) ?? false;
+  const validActor = orderStatusActors[nextStatus]?.includes(actor) ?? false;
+  return validNextStatus && validActor;
+}
+
+export function canRequestReturn(order) {
+  if (!order || order.returnRequest) return false;
+  return ['DELIVERED', 'COMPLETED'].includes(order.status);
 }
 
 export function getStyleAnalysis(answers) {

@@ -3,6 +3,7 @@
     "name": "CIRCULAI",
     "slug": "circulai",
     "version": "1.0.0",
+    "scheme": "circulai",
     "platforms": [
       "ios",
       "android",
@@ -11,16 +12,56 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
-      "package": "com.circulai.app"
+      "package": "com.circulai.app",
+      "edgeToEdgeEnabled": false
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#FAF7F0",
+      "barStyle": "dark-content",
+      "translucent": false
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#FAF7F0",
+      "barStyle": "dark-content",
+      "enforceContrast": false
     },
     "assetBundlePatterns": [
       "**/*"
     ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ff3bd376-8459-4608-a525-c5c285c995ee",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "extra": {
       "eas": {
         "projectId": "ff3bd376-8459-4608-a525-c5c285c995ee"
       }
     },
-    "owner": "arwnsyh"
+    "owner": "arwnsyh",
+    "plugins": [
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Izinkan CIRCULAI mengakses galeri untuk memilih foto profil.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "backgroundColor": "#FAF7F0",
+          "barStyle": "dark",
+          "borderColor": "#E9E7E1",
+          "position": "relative",
+          "visibility": "visible"
+        }
+      ]
+    ]
   }
 }

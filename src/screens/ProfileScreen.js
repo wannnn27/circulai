@@ -1,75 +1,181 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
+import AnimatedPressable from '../components/AnimatedPressable';
 import IconButton from '../components/IconButton';
 import LeafMark from '../components/LeafMark';
 import MetricCard from '../components/MetricCard';
+import ProfileActionModal from '../components/ProfileActionModal';
+import ProfileAvatar from '../components/ProfileAvatar';
 import { profileGroups } from '../data/appData';
 import { useAppState } from '../state/AppContext';
 import { layout } from '../styles/layout';
-import { cardShadow, colors } from '../theme/colors';
+import { colors, shadows } from '../theme/colors';
+import { deleteProfilePhoto, pickProfilePhoto } from '../utils/profilePhoto';
 
-export default function ProfileScreen({ onNavigate }) {
-  const { orders, wishlist, styleProfile } = useAppState();
+// Colored backgrounds for menu icons
+const menuIconColors = {
+  zap: { bg: '#FFF3E0', color: '#E65100' },
+  heart: { bg: '#FDE8E8', color: '#C94C4C' },
+  'maximize-2': { bg: '#E8F5E9', color: '#2E7D32' },
+  'map-pin': { bg: '#E3F2FD', color: '#1565C0' },
+  award: { bg: '#F3E5F5', color: '#7B1FA2' },
+  bell: { bg: '#E8EAF6', color: '#3949AB' },
+  shield: { bg: '#E8F5E9', color: '#2E7D32' },
+  'help-circle': { bg: '#FFF8E1', color: '#F57F17' },
+  'file-text': { bg: '#F1F8E9', color: '#558B2F' },
+  'refresh-cw': { bg: '#FDF4E3', color: '#D99A3D' },
+};
+
+export default function ProfileScreen({ onNavigate, onExchange }) {
+  const [activePanel, setActivePanel] = useState(null);
+  const {
+    addresses,
+    circularPoints,
+    measurements,
+    orders,
+    preferences,
+    resetAccountData,
+    styleProfile,
+    updateUserProfile,
+    userProfile,
+    wishlist
+  } = useAppState();
+
+  const handlePhotoChange = async () => {
+    try {
+      const photoUri = await pickProfilePhoto();
+      if (!photoUri) return;
+      deleteProfilePhoto(userProfile.photoUri);
+      updateUserProfile({ photoUri });
+    } catch (error) {
+      Alert.alert(
+        'Foto belum dapat dipilih',
+        error.code === 'PHOTO_PERMISSION_DENIED'
+          ? 'Izinkan akses galeri agar CIRCULAI dapat menggunakan foto pilihanmu.'
+          : 'Terjadi masalah saat memproses foto. Silakan coba lagi.'
+      );
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Keluar dari akun?',
+      'Data personalisasi lokal, wishlist, dan pengaturan akun akan direset.',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Keluar',
+          style: 'destructive',
+          onPress: () => {
+            resetAccountData();
+            onNavigate('home');
+          }
+        }
+      ]
+    );
+  };
 
   return (
-    <ScrollView style={layout.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <>
+      <ScrollView
+        style={layout.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+      {/* ─── Hero header ────────────────────────────────────────────────── */}
       <View style={styles.hero}>
+        {/* Decorative orbs */}
+        <View style={styles.heroOrb1} />
+        <View style={styles.heroOrb2} />
+
         <View style={styles.topRow}>
-          <Text style={styles.profileTitle}>Profil</Text>
-          <IconButton name="bell" inverted />
+          <Text style={styles.profileTitle}>Profil Saya</Text>
+          <IconButton name="bell" variant="inverted" size="md" onPress={() => setActivePanel('notifications')} />
         </View>
+
         <View style={styles.userRow}>
-          <View style={styles.avatar}>
-            <Feather name="user" size={28} color={colors.forest} />
+          <View style={styles.avatarRing}>
+            <ProfileAvatar
+              editable
+              light
+              name={userProfile.name}
+              photoUri={userProfile.photoUri}
+              size={62}
+              onPress={handlePhotoChange}
+            />
           </View>
-          <View style={styles.userTextArea}>
-            <Text style={styles.userName}>Adi Pratama</Text>
-            <Text style={styles.userEmail}>adi.pratama@email.com</Text>
+
+          <Pressable style={styles.userInfo} onPress={() => setActivePanel('profile')}>
+            <Text style={styles.userName}>{userProfile.name}</Text>
+            <Text style={styles.userEmail}>{userProfile.email}</Text>
             <View style={styles.memberBadge}>
               <LeafMark color={colors.sand} size={14} />
               <Text style={styles.memberBadgeText}>CIRCULAI Member</Text>
             </View>
-          </View>
+          </Pressable>
+          <Pressable style={styles.editProfile} onPress={() => setActivePanel('profile')}>
+            <Feather name="edit-2" size={13} color={colors.sand} />
+          </Pressable>
         </View>
       </View>
 
-      <View style={styles.stats}>
+      {/* ─── Floating stats card ──────────────────────────────────────────── */}
+      <View style={styles.statsCard}>
         <MetricCard value={`${orders.length}`} label="Pesanan" flat />
+        <View style={styles.statsDivider} />
         <MetricCard value="2.4m" label="Kain Hemat" flat />
-        <MetricCard value="320" label="Impact Points" flat />
+        <View style={styles.statsDivider} />
+        <Pressable onPress={() => (onExchange ? onExchange() : onNavigate('exchange'))}>
+          <MetricCard value={`${circularPoints ?? 320}`} label="Impact Pts" flat />
+        </Pressable>
       </View>
 
-      <Pressable style={styles.styleCard} onPress={() => onNavigate('quiz')}>
-        <View style={styles.styleIcon}>
-          <Feather name="zap" size={22} color={colors.white} />
+      {/* ─── AI Style Card ────────────────────────────────────────────────── */}
+      <AnimatedPressable
+        style={styles.styleCard}
+        onPress={() => onNavigate('quiz')}
+        scaleDown={0.98}
+      >
+        <View style={styles.styleIconBg}>
+          <MaterialCommunityIcons name="lightning-bolt" size={22} color={colors.white} />
         </View>
-        <View style={layout.flex}>
+        <View style={{ flex: 1 }}>
           <Text style={styles.styleTitle}>
             {styleProfile ? styleProfile.archetype : 'My Circular Style'}
           </Text>
           <Text style={styles.styleCopy}>
-            {styleProfile ? styleProfile.tagline : 'Selesaikan quiz untuk melihat profil gaya personalmu'}
+            {styleProfile
+              ? styleProfile.tagline
+              : 'Selesaikan quiz untuk melihat profil gaya personalmu'}
           </Text>
         </View>
         <Feather name="chevron-right" size={18} color={colors.warmGray} />
+      </AnimatedPressable>
+
+      {/* ─── Impact / Loyalty card ────────────────────────────────────────── */}
+      <Pressable style={({ pressed }) => [styles.impactCard, pressed && styles.menuItemPressed]} onPress={() => setActivePanel('membership')}>
+        <View style={styles.impactCardHeader}>
+          <View style={styles.impactIconBg}>
+            <MaterialCommunityIcons name="recycle" size={18} color={colors.white} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.impactTitle}>Impact Points: 320</Text>
+            <Text style={styles.impactCopy}>180 poin lagi untuk naik ke tier Emerald</Text>
+          </View>
+          <Feather name="chevron-right" size={17} color={colors.warmGray} />
+        </View>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: '64%' }]} />
+        </View>
+        <View style={styles.progressLabels}>
+          <Text style={styles.progressLabelText}>Green</Text>
+          <Text style={styles.progressLabelText}>64% → Emerald</Text>
+        </View>
       </Pressable>
 
-      <View style={styles.impactCard}>
-        <View style={styles.impactIcon}>
-          <MaterialCommunityIcons name="recycle" size={22} color={colors.white} />
-        </View>
-        <View style={layout.flex}>
-          <Text style={styles.impactTitle}>Impact Points: 320</Text>
-          <Text style={styles.impactCopy}>180 poin lagi untuk naik ke tier Emerald</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: '64%' }]} />
-          </View>
-        </View>
-        <Feather name="chevron-right" size={18} color={colors.warmGray} />
-      </View>
-
+      {/* ─── Menu groups ──────────────────────────────────────────────────── */}
       {profileGroups.map((group) => (
         <View key={group.title} style={styles.menuGroup}>
           <Text style={styles.groupTitle}>{group.title.toUpperCase()}</Text>
@@ -78,29 +184,41 @@ export default function ProfileScreen({ onNavigate }) {
               const badge =
                 item.label === 'Wishlist'
                   ? `${wishlist.length}`
+                  : item.label === 'Ukuran Tersimpan'
+                  ? `${measurements.height} cm`
+                  : item.label === 'Alamat'
+                  ? `${addresses.length}`
+                  : item.label === 'Notifikasi'
+                  ? preferences.notifications.orderUpdates ? 'Aktif' : 'Atur'
                   : item.label === 'My Circular Style' && styleProfile
-                    ? 'Ready'
-                    : item.badge;
+                  ? 'Ready'
+                  : item.badge;
+
+              const iconCfg = menuIconColors[item.icon] ?? { bg: colors.ivory, color: colors.warmGray };
 
               return (
                 <Pressable
                   key={item.label}
-                  style={[styles.menuItem, index < group.items.length - 1 && styles.menuItemBorder]}
-                  onPress={() => handleMenuPress(item.label, onNavigate)}
+                  style={({ pressed }) => [
+                    styles.menuItem,
+                    index < group.items.length - 1 && styles.menuItemBorder,
+                    pressed && styles.menuItemPressed,
+                  ]}
+                  onPress={() => handleMenuPress(item.label, onNavigate, setActivePanel, onExchange)}
                 >
-                  <View style={styles.menuIcon}>
-                    <Feather name={item.icon} size={17} color={colors.warmGray} />
+                  <View style={[styles.menuIcon, { backgroundColor: iconCfg.bg }]}>
+                    <Feather name={item.icon} size={16} color={iconCfg.color} />
                   </View>
-                  <View style={layout.flex}>
+                  <View style={{ flex: 1 }}>
                     <Text style={styles.menuLabel}>{item.label}</Text>
                     {!!item.desc && <Text style={styles.menuDesc}>{item.desc}</Text>}
                   </View>
                   {!!badge && (
-                    <View style={styles.smallBadge}>
-                      <Text style={styles.smallBadgeText}>{badge}</Text>
+                    <View style={styles.menuBadge}>
+                      <Text style={styles.menuBadgeText}>{badge}</Text>
                     </View>
                   )}
-                  <Feather name="chevron-right" size={17} color={colors.lightGray} />
+                  <Feather name="chevron-right" size={16} color={colors.lightGrayDark} />
                 </Pressable>
               );
             })}
@@ -108,244 +226,352 @@ export default function ProfileScreen({ onNavigate }) {
         </View>
       ))}
 
-      <Pressable style={styles.logoutButton} onPress={() => Alert.alert('Keluar', 'Ini prototype, sesi pengguna tetap aktif.')}>
-        <Feather name="log-out" size={16} color={colors.error} />
-        <Text style={styles.logoutText}>Keluar</Text>
-      </Pressable>
-    </ScrollView>
+      {/* ─── Logout ───────────────────────────────────────────────────────── */}
+      <AnimatedPressable
+        style={styles.logoutButton}
+        onPress={handleLogout}
+        scaleDown={0.97}
+      >
+        <View style={styles.logoutIcon}>
+          <Feather name="log-out" size={16} color={colors.error} />
+        </View>
+        <Text style={styles.logoutText}>Keluar dari Akun</Text>
+      </AnimatedPressable>
+
+      {/* App version */}
+      <Text style={styles.version}>CIRCULAI v1.0.0 — Sustainable Fashion Platform</Text>
+      </ScrollView>
+      <ProfileActionModal panel={activePanel} onClose={() => setActivePanel(null)} />
+    </>
   );
 }
 
-function handleMenuPress(label, onNavigate) {
-  if (label === 'My Circular Style') {
-    onNavigate('quiz');
-    return;
-  }
-  if (label === 'Wishlist') {
-    onNavigate('explore');
-    return;
-  }
-  Alert.alert(label, 'Fitur ini sudah disiapkan sebagai placeholder interaktif di prototype.');
+function handleMenuPress(label, onNavigate, setActivePanel, onExchange) {
+  if (label === 'My Circular Style') { onNavigate('quiz'); return; }
+  if (label === 'Wishlist') { onNavigate('explore', { wishlistOnly: true }); return; }
+  if (label === 'Alamat') { onNavigate('profile-addresses'); return; }
+  if (label === 'Circular Exchange') { if (onExchange) { onExchange(); } else { onNavigate('exchange'); } return; }
+
+  const panelByLabel = {
+    'Ukuran Tersimpan': 'measurements',
+    Membership: 'membership',
+    Notifikasi: 'notifications',
+    Keamanan: 'security',
+    Bantuan: 'help',
+    'Kebijakan Privasi': 'privacy'
+  };
+  setActivePanel(panelByLabel[label] ?? null);
 }
 
 const styles = StyleSheet.create({
   content: {
-    paddingBottom: 120
+    paddingBottom: 120,
   },
+  // ─── Hero ─────────────────────────────────────────────────────────────────
   hero: {
     backgroundColor: colors.forest,
     paddingHorizontal: 20,
-    paddingTop: 30,
-    paddingBottom: 28
+    paddingTop: 28,
+    paddingBottom: 36,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  heroOrb1: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: 'rgba(232,220,200,0.07)',
+    right: -60,
+    top: -60,
+  },
+  heroOrb2: {
+    position: 'absolute',
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(201,123,99,0.10)',
+    left: -40,
+    bottom: -40,
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 18
+    marginBottom: 22,
   },
   profileTitle: {
     color: colors.white,
     fontSize: 20,
-    fontWeight: '900'
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   userRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14
+    gap: 14,
+    borderRadius: 18,
+    paddingVertical: 4,
   },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+  avatarRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.sand
+    borderWidth: 2.5,
+    borderColor: 'rgba(232,220,200,0.40)',
+    padding: 2,
   },
-  userTextArea: {
+  userInfo: {
     flex: 1,
-    minWidth: 0
+  },
+  editProfile: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(232,220,200,0.14)',
   },
   userName: {
     color: colors.white,
-    fontSize: 18,
-    fontWeight: '900'
+    fontSize: 19,
+    fontWeight: '900',
+    letterSpacing: -0.3,
   },
   userEmail: {
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 13,
-    marginTop: 2
+    color: 'rgba(255,255,255,0.68)',
+    fontSize: 12,
+    marginTop: 2,
   },
   memberBadge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    borderRadius: 999,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(232,220,200,0.18)',
-    marginTop: 9
+    gap: 5,
+    borderRadius: 9999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: 'rgba(232,220,200,0.16)',
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(232,220,200,0.15)',
   },
   memberBadgeText: {
     color: colors.sand,
-    fontSize: 11,
-    fontWeight: '800'
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
-  stats: {
+  // ─── Stats card ───────────────────────────────────────────────────────────
+  statsCard: {
     flexDirection: 'row',
     marginHorizontal: 20,
-    marginTop: -16,
-    marginBottom: 16,
-    borderRadius: 18,
+    marginTop: -18,
+    marginBottom: 18,
+    borderRadius: 20,
     backgroundColor: colors.white,
-    paddingVertical: 12,
-    ...cardShadow
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    ...shadows.md,
   },
+  statsDivider: {
+    width: 1,
+    backgroundColor: colors.lightGray,
+    marginVertical: 4,
+  },
+  // ─── Style card ───────────────────────────────────────────────────────────
   styleCard: {
     marginHorizontal: 20,
     borderRadius: 20,
     padding: 16,
     backgroundColor: colors.white,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.lightGray,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 14
+    gap: 13,
+    marginBottom: 12,
+    ...shadows.sm,
   },
-  styleIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+  styleIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.forest
+    backgroundColor: colors.forest,
   },
   styleTitle: {
     color: colors.charcoal,
     fontSize: 14,
-    fontWeight: '900'
+    fontWeight: '900',
+    letterSpacing: -0.2,
   },
   styleCopy: {
     color: colors.warmGray,
-    fontSize: 12,
-    lineHeight: 17,
-    marginTop: 2
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
   },
+  // ─── Impact card ──────────────────────────────────────────────────────────
   impactCard: {
     marginHorizontal: 20,
     borderRadius: 20,
     padding: 16,
-    backgroundColor: colors.sand,
+    backgroundColor: colors.sandLight,
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    marginBottom: 22,
+  },
+  impactCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 20
+    gap: 13,
+    marginBottom: 14,
   },
-  impactIcon: {
-    width: 46,
-    height: 46,
+  impactIconBg: {
+    width: 44,
+    height: 44,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.forest
+    backgroundColor: colors.forest,
   },
   impactTitle: {
     color: colors.charcoal,
     fontSize: 13,
-    fontWeight: '900'
+    fontWeight: '900',
   },
   impactCopy: {
     color: colors.warmGray,
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 2,
-    marginBottom: 8
   },
   progressTrack: {
-    height: 7,
-    borderRadius: 999,
-    backgroundColor: colors.white,
-    overflow: 'hidden'
+    height: 8,
+    borderRadius: 9999,
+    backgroundColor: 'rgba(122,122,114,0.20)',
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 999,
-    backgroundColor: colors.forest
+    borderRadius: 9999,
+    backgroundColor: colors.forest,
   },
+  progressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  progressLabelText: {
+    color: colors.warmGray,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  // ─── Menu groups ──────────────────────────────────────────────────────────
   menuGroup: {
     marginHorizontal: 20,
-    marginBottom: 16
+    marginBottom: 18,
   },
   groupTitle: {
-    color: colors.warmGray,
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 1.1,
-    marginBottom: 8
+    color: colors.warmGrayLight,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginBottom: 8,
   },
   menuCard: {
-    borderRadius: 18,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.lightGray
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    ...shadows.sm,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 13
+    gap: 13,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
   },
   menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray
+    borderBottomColor: colors.lightGray,
+  },
+  menuItemPressed: {
+    backgroundColor: colors.ivory,
   },
   menuIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 11,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.ivory
   },
   menuLabel: {
     color: colors.charcoal,
     fontSize: 14,
-    fontWeight: '800'
+    fontWeight: '800',
+    letterSpacing: -0.1,
   },
   menuDesc: {
     color: colors.warmGray,
-    fontSize: 12,
-    marginTop: 1
+    fontSize: 11,
+    marginTop: 1,
   },
-  smallBadge: {
-    borderRadius: 999,
+  menuBadge: {
+    borderRadius: 9999,
     paddingHorizontal: 9,
     paddingVertical: 4,
-    backgroundColor: colors.sand
+    backgroundColor: colors.successLight,
   },
-  smallBadgeText: {
-    color: colors.forest,
-    fontSize: 11,
-    fontWeight: '900'
+  menuBadgeText: {
+    color: colors.success,
+    fontSize: 10,
+    fontWeight: '900',
   },
+  // ─── Logout ───────────────────────────────────────────────────────────────
   logoutButton: {
     marginHorizontal: 20,
+    minHeight: 56,
     borderRadius: 18,
+    paddingHorizontal: 20,
     paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    borderWidth: 1.5,
-    borderColor: colors.error,
-    marginTop: 2
+    gap: 10,
+    backgroundColor: colors.errorLight,
+    borderWidth: 1,
+    borderColor: 'rgba(201,76,76,0.20)',
+    marginBottom: 16,
+  },
+  logoutIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(201,76,76,0.12)',
   },
   logoutText: {
     color: colors.error,
     fontSize: 14,
-    fontWeight: '900'
-  }
+    lineHeight: 19,
+    textAlign: 'center',
+    fontWeight: '900',
+  },
+  // ─── App version ──────────────────────────────────────────────────────────
+  version: {
+    color: colors.warmGrayLight,
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: 0.3,
+  },
 });

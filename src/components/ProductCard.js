@@ -1,161 +1,337 @@
 import React from 'react';
-import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { cardShadow, colors } from '../theme/colors';
+import AnimatedPressable from './AnimatedPressable';
+import { colors, shadows } from '../theme/colors';
 import { formatCurrency } from '../data/appData';
 
 export default function ProductCard({
   product,
-  compact = false,
   grid = false,
   favorite = false,
   onPress,
-  onToggleFavorite
+  onToggleFavorite,
 }) {
+  if (grid) {
+    // ─── Compact Grid Card ─────────────────────────────────────────────
+    return (
+      <AnimatedPressable
+        containerStyle={styles.gridSlot}
+        style={styles.gridCard}
+        onPress={onPress}
+        scaleDown={0.97}
+      >
+        {/* Image */}
+        <ImageBackground
+          source={{ uri: product.image }}
+          style={styles.gridImage}
+          imageStyle={styles.imageStyle}
+        >
+          {/* Favorite button */}
+          <AnimatedPressable
+            style={styles.favoriteBtn}
+            onPress={onToggleFavorite}
+            hitSlop={10}
+            scaleDown={0.88}
+          >
+            <Feather
+              name="heart"
+              size={13}
+              color={favorite ? colors.terracotta : colors.warmGray}
+            />
+          </AnimatedPressable>
+
+          {/* Saved badge — bottom left */}
+          <View style={styles.savedBadge}>
+            <MaterialCommunityIcons name="leaf" size={9} color={colors.forest} />
+            <Text style={styles.savedText} numberOfLines={1}>{product.savedFabric}</Text>
+          </View>
+        </ImageBackground>
+
+        {/* Info */}
+        <View style={styles.gridInfo}>
+          {/* First badge only — single line, no wrap */}
+          {product.badges?.length > 0 && (
+            <View style={styles.gridBadge}>
+              <Text style={styles.gridBadgeText} numberOfLines={1}>
+                {product.badges[0]}
+              </Text>
+            </View>
+          )}
+
+          <Text style={styles.gridTitle} numberOfLines={2}>
+            {product.name}
+          </Text>
+
+          <Text style={styles.gridTailor} numberOfLines={1}>
+            {product.tailor}
+          </Text>
+
+          <View style={styles.gridBottom}>
+            <Text style={styles.gridPrice}>
+              {formatCurrency(product.price)}
+            </Text>
+            <View style={styles.ratingPill}>
+              <Feather name="star" size={9} color={colors.warning} />
+              <Text style={styles.ratingText}>{product.rating}</Text>
+            </View>
+          </View>
+        </View>
+      </AnimatedPressable>
+    );
+  }
+
+  // ─── Full / List Card ────────────────────────────────────────────────
   return (
-    <Pressable style={[styles.card, grid && styles.gridCard, compact && styles.compact]} onPress={onPress}>
-      <ImageBackground source={{ uri: product.image }} style={[styles.image, grid && styles.gridImage]} imageStyle={styles.imageRadius}>
-        <View style={styles.imageShade} />
-        <Pressable style={styles.favoriteButton} onPress={onToggleFavorite} hitSlop={8}>
+    <AnimatedPressable
+      style={styles.card}
+      onPress={onPress}
+      scaleDown={0.97}
+    >
+      <ImageBackground
+        source={{ uri: product.image }}
+        style={styles.image}
+        imageStyle={styles.imageStyle}
+      >
+        <AnimatedPressable
+          style={[styles.favoriteBtn, styles.favoriteBtnLarge]}
+          onPress={onToggleFavorite}
+          hitSlop={10}
+          scaleDown={0.88}
+        >
           <Feather
             name="heart"
-            size={16}
+            size={15}
             color={favorite ? colors.terracotta : colors.warmGray}
-            style={favorite && styles.favoriteFill}
           />
-        </Pressable>
+        </AnimatedPressable>
+
         <View style={styles.savedBadge}>
-          <MaterialCommunityIcons name="leaf" size={12} color={colors.forest} />
+          <MaterialCommunityIcons name="leaf" size={10} color={colors.forest} />
           <Text style={styles.savedText}>{product.savedFabric} hemat</Text>
         </View>
       </ImageBackground>
 
       <View style={styles.info}>
         <View style={styles.badges}>
-          {product.badges.slice(0, grid ? 1 : 2).map((badge) => (
+          {product.badges.slice(0, 2).map((badge) => (
             <View key={badge} style={styles.badge}>
               <Text style={styles.badgeText}>{badge}</Text>
             </View>
           ))}
         </View>
-        <Text style={styles.title} numberOfLines={grid ? 2 : 1}>{product.name}</Text>
-        <Text style={styles.desc} numberOfLines={1}>by {product.tailor}</Text>
+
+        <Text style={styles.title} numberOfLines={1}>{product.name}</Text>
+        <Text style={styles.tailor} numberOfLines={1}>by {product.tailor}</Text>
+
         <View style={styles.metaRow}>
-          <Text style={styles.price}>{formatCurrency(product.price)}</Text>
+          <Text style={styles.price} numberOfLines={1}>{formatCurrency(product.price)}</Text>
+          <View style={styles.ratingPill}>
+            <Feather name="star" size={11} color={colors.warning} />
+            <Text style={styles.ratingText}>{product.rating}</Text>
+          </View>
+        </View>
+
+        <View style={styles.etaRow}>
+          <Feather name="clock" size={10} color={colors.warmGrayLight} />
           <Text style={styles.eta}>{product.eta}</Text>
         </View>
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
+  // ─── Full card ────────────────────────────────────────────────────────────
   card: {
-    borderRadius: 22,
+    borderRadius: 20,
     backgroundColor: colors.white,
     marginBottom: 14,
     overflow: 'hidden',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: colors.lightGray,
-    ...cardShadow
-  },
-  gridCard: {
-    width: '48%'
-  },
-  compact: {
-    shadowOpacity: 0.04,
-    elevation: 2
+    ...shadows.md,
   },
   image: {
-    minHeight: 172,
-    padding: 12,
-    justifyContent: 'space-between'
-  },
-  gridImage: {
-    minHeight: 172
-  },
-  imageRadius: {
-    backgroundColor: colors.sand
-  },
-  imageShade: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.08)'
-  },
-  favoriteButton: {
-    alignSelf: 'flex-end',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.92)'
-  },
-  favoriteFill: {
-    textShadowColor: colors.terracotta,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 1
-  },
-  savedBadge: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    backgroundColor: 'rgba(255,255,255,0.9)'
-  },
-  savedText: {
-    color: colors.forest,
-    fontSize: 10,
-    fontWeight: '800'
+    height: 180,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    flexDirection: 'column',
   },
   info: {
-    padding: 13
+    padding: 13,
+    paddingTop: 11,
   },
   badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 5,
-    marginBottom: 8
+    marginBottom: 7,
   },
   badge: {
-    borderRadius: 999,
+    borderRadius: 9999,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: 'rgba(47,79,58,0.1)'
+    paddingVertical: 3,
+    backgroundColor: 'rgba(47,79,58,0.09)',
+    maxWidth: 120,
   },
   badgeText: {
     color: colors.forest,
-    fontSize: 10,
-    fontWeight: '800'
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   title: {
     color: colors.charcoal,
     fontSize: 14,
     fontWeight: '800',
-    lineHeight: 19
+    lineHeight: 18,
   },
-  desc: {
+  tailor: {
     color: colors.warmGray,
     fontSize: 11,
-    marginTop: 2
+    marginTop: 2,
+    fontWeight: '500',
   },
   metaRow: {
     marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8
   },
   price: {
     color: colors.forest,
     fontSize: 14,
-    fontWeight: '900'
+    fontWeight: '900',
+    flex: 1,
+    marginRight: 8,
+  },
+  etaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
   },
   eta: {
+    color: colors.warmGrayLight,
+    fontSize: 10,
+  },
+  // ─── Grid card ────────────────────────────────────────────────────────────
+  gridCard: {
+    width: '100%',
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    ...shadows.sm,
+  },
+  gridImage: {
+    height: 170,
+    justifyContent: 'space-between',
+    flexDirection: 'column',
+  },
+  gridInfo: {
+    padding: 10,
+    paddingTop: 9,
+    gap: 3,
+  },
+  gridBadge: {
+    alignSelf: 'flex-start',
+    borderRadius: 9999,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    backgroundColor: 'rgba(47,79,58,0.09)',
+    maxWidth: '100%',
+  },
+  gridBadgeText: {
+    color: colors.forest,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  gridTitle: {
+    color: colors.charcoal,
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 17,
+    marginTop: 1,
+    flexShrink: 1,
+  },
+  gridTailor: {
     color: colors.warmGray,
-    fontSize: 10
-  }
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  gridBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 7,
+    gap: 4,
+  },
+  gridSlot: {
+    width: '48%',
+    alignSelf: 'flex-start',
+  },
+  gridPrice: {
+    color: colors.forest,
+    fontSize: 13,
+    fontWeight: '900',
+    flex: 1,
+  },
+  // ─── Shared ───────────────────────────────────────────────────────────────
+  imageStyle: {
+    backgroundColor: colors.sand,
+  },
+  favoriteBtn: {
+    alignSelf: 'flex-end',
+    margin: 8,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.94)',
+    ...shadows.sm,
+  },
+  favoriteBtnLarge: {
+    width: 34,
+    height: 34,
+    margin: 10,
+  },
+  savedBadge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderRadius: 9999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255,255,255,0.94)',
+    margin: 8,
+    marginTop: 0,
+    ...shadows.sm,
+  },
+  savedText: {
+    color: colors.forest,
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  ratingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: colors.warningLight,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 9999,
+    flexShrink: 0,
+  },
+  ratingText: {
+    color: colors.warning,
+    fontSize: 9,
+    fontWeight: '800',
+  },
 });

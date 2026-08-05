@@ -1,44 +1,71 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export default function LeafMark({ color, size }) {
+import { colors } from '../theme/colors';
+
+/**
+ * LeafMark — CIRCULAI's brand logomark.
+ * A stylized leaf representing circular fashion and sustainability.
+ *
+ * Props:
+ *  - color: string (default colors.sand)
+ *  - size: number (default 40)
+ */
+export default function LeafMark({ color = colors.sand, size = 40 }) {
+  // Use MaterialCommunityIcons leaf for a clean, professional logomark
+  // with a subtle circle behind it for context
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={[
+        styles.container,
+        {
+          width: size,
+          height: size,
+          borderRadius: size * 0.3,
+        },
+      ]}
+    >
+      {/* Circular arc top-right — suggests circularity */}
       <View
         style={[
-          styles.leafShape,
+          styles.arc,
           {
-            width: size * 0.58,
-            height: size * 0.78,
+            width: size * 0.65,
+            height: size * 0.65,
+            borderRadius: size * 0.65,
             borderColor: color,
-            borderTopLeftRadius: size,
-            borderBottomRightRadius: size,
-            transform: [{ rotate: '-38deg' }]
-          }
+            borderWidth: Math.max(1.5, size * 0.038),
+            top: size * 0.04,
+            right: size * 0.04,
+          },
         ]}
       />
-      <View
-        style={[
-          styles.leafStem,
-          {
-            width: size * 0.55,
-            backgroundColor: color,
-            transform: [{ rotate: '-38deg' }]
-          }
-        ]}
+      {/* Leaf icon — centered */}
+      <MaterialCommunityIcons
+        name="leaf"
+        size={size * 0.52}
+        color={color}
+        style={styles.icon}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  leafShape: {
-    borderWidth: 2,
-    position: 'absolute'
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  leafStem: {
-    height: 2,
-    borderRadius: 2,
-    position: 'absolute'
-  }
+  arc: {
+    position: 'absolute',
+    borderBottomColor: 'transparent',
+    borderLeftColor: 'transparent',
+    opacity: 0.35,
+  },
+  icon: {
+    // Slight downward offset for optical centering with arc
+    marginTop: 2,
+  },
 });

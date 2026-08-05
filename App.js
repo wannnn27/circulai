@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Platform, StyleSheet } from 'react-native';
+import * as NavigationBar from 'expo-navigation-bar';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import SplashScreen from './src/screens/SplashScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
@@ -9,20 +12,36 @@ import { colors } from './src/theme/colors';
 
 export default function App() {
   const [phase, setPhase] = useState('splash');
+  const backgroundColor = phase === 'splash' ? colors.forest : colors.ivory;
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    NavigationBar.setPositionAsync('relative').catch(() => {});
+    NavigationBar.setButtonStyleAsync('dark').catch(() => {});
+    NavigationBar.setBackgroundColorAsync(colors.ivory).catch(() => {});
+    NavigationBar.setBorderColorAsync(colors.lightGray).catch(() => {});
+  }, []);
 
   return (
-    <SafeAreaView style={styles.root}>
-      <StatusBar
-        barStyle={phase === 'splash' ? 'light-content' : 'dark-content'}
-        backgroundColor={phase === 'splash' ? colors.forest : colors.ivory}
-      />
+    <SafeAreaProvider>
+      <SafeAreaView
+        style={[styles.root, { backgroundColor }]}
+        edges={phase === 'main' ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']}
+      >
+        <StatusBar
+          style={phase === 'splash' ? 'light' : 'dark'}
+          backgroundColor={backgroundColor}
+          translucent={false}
+        />
 
-      <AppProvider>
-        {phase === 'splash' && <SplashScreen onDone={() => setPhase('onboarding')} />}
-        {phase === 'onboarding' && <OnboardingScreen onDone={() => setPhase('main')} />}
-        {phase === 'main' && <MainApp />}
-      </AppProvider>
-    </SafeAreaView>
+        <AppProvider>
+          {phase === 'splash' && <SplashScreen onDone={() => setPhase('onboarding')} />}
+          {phase === 'onboarding' && <OnboardingScreen onDone={() => setPhase('main')} />}
+          {phase === 'main' && <MainApp />}
+        </AppProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
