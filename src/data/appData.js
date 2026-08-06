@@ -2,17 +2,23 @@ export const onboarding = [
   {
     icon: 'tshirt-crew-outline',
     title: 'Fashion That Fits You',
-    desc: 'Temukan outfit yang cocok dengan warna, bentuk tubuh, dan gaya personalmu.'
+    desc: 'Temukan outfit yang cocok dengan warna, bentuk tubuh, dan gaya personalmu.',
+    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1000&q=80',
+    tag: 'PERSONAL STYLE'
   },
   {
     icon: 'recycle',
     title: 'Made After You Order',
-    desc: 'Produk dibuat setelah pesanan masuk untuk mengurangi stok mati dan limbah fashion.'
+    desc: 'Produk dibuat setelah pesanan masuk untuk mengurangi stok mati dan limbah fashion.',
+    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=1000&q=80',
+    tag: 'ZERO WASTE'
   },
   {
     icon: 'account-group-outline',
     title: 'Support Local Tailors',
-    desc: 'Setiap pesanan membantu UMKM fashion dan penjahit lokal berkembang.'
+    desc: 'Setiap pesanan membantu UMKM fashion dan penjahit lokal berkembang.',
+    image: 'https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?auto=format&fit=crop&w=1000&q=80',
+    tag: 'LOCAL ARTISANS'
   }
 ];
 
@@ -33,15 +39,15 @@ export const products = [
     name: 'Luna Wrap Top',
     tailor: 'Rahayu Tailor',
     tailorCity: 'Sleman, Yogyakarta',
-    price: 189000,
+    price: 155000, // ongkos jahit blouse/atasan Yogyakarta 2025: Rp80.000–160.000 (sumber: devotelabels.id)
     badges: ['Made-to-Order', 'Kain Sisa'],
     category: 'Outer',
     eta: '5-7 hari',
     rating: 4.9,
     savedFabric: '0.8m',
-    material: 'Rayon lokal sisa produksi',
+    material: 'Rayon lokal sisa produksi', // rayon lokal Rp35.000–50.000/m (ulastempat.com)
     color: '#D7B39A',
-    image: 'https://images.unsplash.com/photo-1596636222220-dfb7071e3676?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=900',
+    image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/6d2ec2e1f3f544a8b4d71c61e34a1467~.jpeg.webp',
     description: 'Wrap top serbaguna dengan tali pinggang yang membentuk siluet tanpa terasa ketat.',
     measurements: ['Lingkar dada', 'Panjang top', 'Lingkar lengan'],
     recommendations: ['Office-to-dinner', 'Rectangle body', 'Warm earth palette']
@@ -51,15 +57,15 @@ export const products = [
     name: 'Olive Linen Dress',
     tailor: 'Kartika Studio',
     tailorCity: 'Bandung',
-    price: 245000,
+    price: 175000, // ongkos jahit dress kasual Bandung 2026: Rp120.000–180.000 (benang rapi, batas atas kota besar)
     badges: ['Made-to-Order'],
     category: 'Dress',
     eta: '7-10 hari',
     rating: 4.8,
     savedFabric: '1.0m',
-    material: 'Linen blend deadstock',
+    material: 'Linen blend deadstock', // linen lokal Rp40.000–100.000/m (ulastempat.com)
     color: '#7D8C55',
-    image: 'https://images.unsplash.com/photo-1637248360598-6bc357ae6958?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=900',
+    image: 'https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/99/MTA-185118741/brd-74257_full01-473f6415.webp',
     description: 'Dress olive dengan potongan loose, cocok untuk daily wear dan acara semi formal.',
     measurements: ['Lingkar dada', 'Lingkar pinggang', 'Panjang dress'],
     recommendations: ['Minimalist', 'Medium olive skin', 'Daily wear']
@@ -69,15 +75,15 @@ export const products = [
     name: 'Earth Tone Blouse',
     tailor: 'Sari Tailor',
     tailorCity: 'Solo',
-    price: 165000,
+    price: 120000, // ongkos jahit kemeja/blouse Solo (daerah kecil, batas bawah kisaran): Rp90.000–160.000
     badges: ['Kain Sisa', 'Local Tailor'],
     category: 'Kemeja',
     eta: '4-6 hari',
     rating: 4.7,
     savedFabric: '0.5m',
-    material: 'Katun poplin sisa atelier',
+    material: 'Katun poplin sisa atelier', // katun lokal terjangkau, kualitas medium
     color: '#C97B63',
-    image: 'https://images.unsplash.com/photo-1640257846267-9db046ffe896?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=900',
+    image: 'https://batiksolo.com/cdn/shop/files/UCH04391EDIT_427x.jpg?v=1733903172',
     description: 'Blouse earthy yang ringan dengan detail clean untuk dipadukan dengan celana high waist.',
     measurements: ['Lingkar dada', 'Lebar bahu', 'Panjang lengan'],
     recommendations: ['Clean casual', 'Smart casual', 'Office']
@@ -87,15 +93,15 @@ export const products = [
     name: 'Casual Outer Wrap',
     tailor: 'Jogja Atelier',
     tailorCity: 'Yogyakarta',
-    price: 320000,
+    price: 210000, // outer/blazer panjang lebih kompleks dari dress: estimasi Rp200.000–250.000 (2025/2026)
     badges: ['Low Waste'],
     category: 'Outer',
     eta: '6-9 hari',
     rating: 4.8,
     savedFabric: '1.2m',
-    material: 'Tenun rayon mixed scraps',
+    material: 'Tenun rayon mixed scraps', // tenun rayon premium, sisa pabrik lokal
     color: '#8E6F5A',
-    image: 'https://images.unsplash.com/photo-1647714028322-4bde00824b65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=900',
+    image: 'https://ethica-collection.com/wp-content/uploads/2023/12/MASAMI-04-KHAKI-WP-1-4.webp',
     description: 'Outer wrap dengan garis panjang untuk layering yang nyaman dan memanjangkan siluet.',
     measurements: ['Panjang outer', 'Lebar bahu', 'Lingkar lengan'],
     recommendations: ['Traveling', 'Layering', 'Apple body']
@@ -105,7 +111,7 @@ export const products = [
     name: 'Terracotta Midi Dress',
     tailor: 'Kartika Studio',
     tailorCity: 'Bandung',
-    price: 278000,
+    price: 195000, // midi dress semi-formal Bandung; lebih dari dress kasual karena detail flowy & ukuran
     badges: ['Made-to-Order', 'Kain Sisa'],
     category: 'Dress',
     eta: '7-10 hari',
@@ -113,7 +119,7 @@ export const products = [
     savedFabric: '1.1m',
     material: 'Rayon flowy',
     color: '#B96E5B',
-    image: 'https://images.unsplash.com/photo-1682615826492-78dee8c1afed?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=900',
+    image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/43427d1d8a6642af8db7bbc290ee71d3~.jpeg.webp',
     description: 'Midi dress terracotta dengan potongan flowy untuk special event yang tetap mindful.',
     measurements: ['Lingkar dada', 'Lingkar pinggang', 'Panjang midi'],
     recommendations: ['Special event', 'Feminine soft', 'Medium warm skin']
@@ -123,15 +129,15 @@ export const products = [
     name: 'Natural Linen Shirt',
     tailor: 'Rahayu Tailor',
     tailorCity: 'Sleman, Yogyakarta',
-    price: 198000,
+    price: 135000, // kemeja linen Sleman (pinggiran Yogya, lebih terjangkau dari pusat kota): Rp90.000–150.000
     badges: ['Local Tailor'],
     category: 'Kemeja',
     eta: '5-7 hari',
     rating: 4.7,
     savedFabric: '0.6m',
-    material: 'Linen natural lokal',
+    material: 'Linen natural lokal', // linen natural lokal, sesuai tren slow fashion 2025
     color: '#E8DCC8',
-    image: 'https://images.unsplash.com/photo-1752770260282-6abbc0443762?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=900',
+    image: 'https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/16d546dcae0c4256abf37973bdb49277~tplv-aphluv4xwc-white-pad-v1:500:500.jpeg',
     description: 'Kemeja linen natural dengan detail minimal untuk capsule wardrobe.',
     measurements: ['Lingkar dada', 'Panjang kemeja', 'Lebar bahu'],
     recommendations: ['Minimalist', 'Smart casual', 'Formal']
@@ -149,6 +155,7 @@ export const tailors = [
     experience: '9 tahun',
     responseTime: '< 15 menit',
     verified: true,
+    // catatan: penjahit di Sleman (pinggiran) umumnya lebih terjangkau dari pusat kota (devotelabels.id 2025)
     image: 'https://images.unsplash.com/photo-1673201229733-69d19c5c4a87?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500'
   },
   {
@@ -161,6 +168,7 @@ export const tailors = [
     experience: '7 tahun',
     responseTime: '< 20 menit',
     verified: true,
+    // catatan: Bandung adalah sentra konveksi & fashion lokal yang sedang bertransformasi (industri-fashion-indonesia-2025)
     image: 'https://images.unsplash.com/photo-1457972657980-4c9fddebec8d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500'
   },
   {
@@ -173,6 +181,7 @@ export const tailors = [
     experience: '11 tahun',
     responseTime: '< 10 menit',
     verified: true,
+    // catatan: Solo adalah pusat produksi fashion lokal; tren "wajah penjahit pada label" (Kubik Society, Kompas 2026)
     image: 'https://images.unsplash.com/photo-1578353022142-09264fd64295?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500'
   },
   {
@@ -185,6 +194,7 @@ export const tailors = [
     experience: '8 tahun',
     responseTime: '< 20 menit',
     verified: true,
+    // catatan: Yogyakarta dikenal sebagai kota sustainable & handmade fashion (projectplanetid.com, tatlerasia.com)
     image: 'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=500'
   }
 ];

@@ -21,7 +21,7 @@ import { api } from '../services/api';
 import { deleteProfilePhoto } from '../utils/profilePhoto';
 
 const AppContext = createContext(null);
-const STORAGE_KEY = '@circulai/app-state-v2';
+const STORAGE_KEY = '@circulai/app-state-v3';
 const defaultUserProfile = {
   id: 'USR-001',
   name: 'Adi Arwan Syah',

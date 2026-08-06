@@ -29,11 +29,7 @@ const heroSlides = [
     copy: 'Outfit cocok, kain sisa berkurang, UMKM lokal berkembang.',
     button: 'Coba AI Stylist',
     route: 'quiz',
-    icon: 'lightning-bolt',
-    visualLabel: 'AI Style Match',
-    background: colors.forest,
-    orbOne: 'rgba(232,220,200,0.08)',
-    orbTwo: 'rgba(201,123,99,0.15)',
+    image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1000&q=80',
   },
   {
     id: 'made-to-order',
@@ -43,11 +39,7 @@ const heroSlides = [
     copy: 'Kami mulai membuat setelah kamu memesan. Lebih personal, lebih sedikit limbah.',
     button: 'Jelajahi Koleksi',
     route: 'explore',
-    icon: 'tshirt-crew-outline',
-    visualLabel: 'On Demand',
-    background: '#7A4A3C',
-    orbOne: 'rgba(250,247,240,0.10)',
-    orbTwo: 'rgba(232,220,200,0.13)',
+    image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=1000&q=80',
   },
   {
     id: 'local',
@@ -57,11 +49,7 @@ const heroSlides = [
     copy: 'Setiap pesanan mendukung keterampilan dan pertumbuhan penjahit lokal.',
     button: 'Temukan Produk',
     route: 'explore',
-    icon: 'account-group-outline',
-    visualLabel: '134 Makers',
-    background: '#31485B',
-    orbOne: 'rgba(232,220,200,0.10)',
-    orbTwo: 'rgba(201,123,99,0.14)',
+    image: 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=1000&q=80',
   },
 ];
 
@@ -154,45 +142,36 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
           {heroSlides.map((slide, slideIndex) => (
             <View key={slide.id} style={[styles.heroSlide, { width: heroWidth }]}>
               <AnimatedPressable
-                style={[styles.heroCard, { backgroundColor: slide.background }]}
+                style={styles.heroCard}
                 onPress={() => onNavigate(slide.route)}
                 scaleDown={0.985}
               >
-                <View style={[styles.heroOrbOne, { backgroundColor: slide.orbOne }]} />
-                <View style={[styles.heroOrbTwo, { backgroundColor: slide.orbTwo }]} />
-                <View style={styles.heroOrbThree} />
+                <ImageBackground
+                  source={{ uri: slide.image }}
+                  style={styles.heroImageBg}
+                  imageStyle={{ borderRadius: 24 }}
+                >
+                  <View style={styles.heroGradientOverlay} />
 
-                <View style={styles.heroContent}>
-                  <View style={styles.heroBadge}>
-                    <MaterialCommunityIcons name={slide.badgeIcon} size={12} color={colors.sand} />
-                    <Text style={styles.heroBadgeText}>{slide.badge}</Text>
-                  </View>
+                  <View style={styles.heroContent}>
+                    <View style={styles.heroBadge}>
+                      <MaterialCommunityIcons name={slide.badgeIcon} size={12} color={colors.sand} />
+                      <Text style={styles.heroBadgeText}>{slide.badge}</Text>
+                    </View>
 
-                  <Text style={styles.heroTitle}>{slide.title}</Text>
-                  <Text style={styles.heroCopy}>{slide.copy}</Text>
+                    <Text style={styles.heroTitle}>{slide.title}</Text>
+                    <Text style={styles.heroCopy}>{slide.copy}</Text>
 
-                  <View style={styles.heroButton}>
-                    <Text style={styles.heroButtonText}>
-                      {slideIndex === 0 && styleProfile ? 'Lihat Profil AI' : slide.button}
-                    </Text>
-                    <View style={styles.heroButtonArrow}>
-                      <Feather name="arrow-right" size={13} color={colors.sand} />
+                    <View style={styles.heroButton}>
+                      <Text style={styles.heroButtonText}>
+                        {slideIndex === 0 && styleProfile ? 'Lihat Profil AI' : slide.button}
+                      </Text>
+                      <View style={styles.heroButtonArrow}>
+                        <Feather name="arrow-right" size={13} color={colors.sand} />
+                      </View>
                     </View>
                   </View>
-                </View>
-
-                <View style={styles.heroRight}>
-                  <View style={styles.heroVisualRingOuter} />
-                  <View style={styles.heroVisualRingInner} />
-                  <View style={styles.heroVisualMark}>
-                    <MaterialCommunityIcons
-                      name={slide.icon}
-                      size={48}
-                      color="rgba(232,220,200,0.76)"
-                    />
-                  </View>
-                  <Text style={styles.heroVisualLabel}>{slide.visualLabel}</Text>
-                </View>
+                </ImageBackground>
               </AnimatedPressable>
             </View>
           ))}
@@ -241,19 +220,26 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
         onPress={() => onNavigate('custom-design')}
         scaleDown={0.985}
       >
-        <View style={styles.customBannerContent}>
-          <View style={styles.customBadge}>
-            <MaterialCommunityIcons name="scissors-cutting" size={11} color={colors.white} />
-            <Text style={styles.customBadgeText}>BESPOKE STUDIO</Text>
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80' }}
+          style={styles.bannerImageBg}
+          imageStyle={{ borderRadius: 20 }}
+        >
+          <View style={styles.bannerGradientOverlay} />
+          <View style={styles.customBannerContent}>
+            <View style={styles.customBadge}>
+              <MaterialCommunityIcons name="scissors-cutting" size={11} color={colors.white} />
+              <Text style={styles.customBadgeText}>BESPOKE STUDIO</Text>
+            </View>
+            <Text style={styles.customBannerTitle}>Design Your Own Outfit</Text>
+            <Text style={styles.customBannerDesc}>
+              Pilih model, jenis kain sisa atelier, kerah & bentuk lengan kustommu.
+            </Text>
           </View>
-          <Text style={styles.customBannerTitle}>Design Your Own Outfit</Text>
-          <Text style={styles.customBannerDesc}>
-            Pilih model, jenis kain sisa atelier, kerah & bentuk lengan kustommu.
-          </Text>
-        </View>
-        <View style={styles.customBannerIcon}>
-          <MaterialCommunityIcons name="palette-swatch-outline" size={26} color={colors.forest} />
-        </View>
+          <View style={styles.bannerArrowBtn}>
+            <Feather name="arrow-right" size={16} color={colors.white} />
+          </View>
+        </ImageBackground>
       </AnimatedPressable>
 
       {/* ─── Circular Exchange Banner ────────────────────────────────────── */}
@@ -262,25 +248,29 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
         onPress={() => (onExchange ? onExchange() : onNavigate('exchange'))}
         scaleDown={0.985}
       >
-        <View style={styles.exchangeBannerContent}>
-          <View style={styles.exchangeBadge}>
-            <MaterialCommunityIcons name="recycle" size={11} color={colors.white} />
-            <Text style={styles.exchangeBadgeText}>CIRCULAR REWARDS</Text>
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1532453288672-3a27e9be9efd?auto=format&fit=crop&w=800&q=80' }}
+          style={styles.bannerImageBg}
+          imageStyle={{ borderRadius: 20 }}
+        >
+          <View style={styles.bannerGradientOverlayDark} />
+          <View style={styles.exchangeBannerContent}>
+            <View style={styles.exchangeBadge}>
+              <MaterialCommunityIcons name="recycle" size={11} color={colors.white} />
+              <Text style={styles.exchangeBadgeText}>CIRCULAR REWARDS</Text>
+            </View>
+            <Text style={styles.customBannerTitle}>Tukar Barang Bekas → Poin</Text>
+            <Text style={styles.customBannerDesc}>
+              Kirim kain perca / baju bekasmu untuk didaur ulang & dapatkan diskon belanja!
+            </Text>
           </View>
-          <Text style={styles.exchangeBannerTitle}>Tukar Barang Bekas → Poin</Text>
-          <Text style={styles.exchangeBannerDesc}>
-            Kirim kain perca / baju bekasmu untuk didaur ulang & dapatkan diskon belanja!
-          </Text>
-        </View>
-        <View style={styles.exchangeBannerRight}>
-          <View style={styles.exchangePointPill}>
-            <Feather name="star" size={12} color={colors.warning} />
-            <Text style={styles.exchangePointText}>{(circularPoints ?? 320).toLocaleString('id-ID')} pts</Text>
+          <View style={styles.exchangeBannerRight}>
+            <View style={styles.exchangePointPill}>
+              <Feather name="star" size={12} color={colors.warning} />
+              <Text style={styles.exchangePointText}>{(circularPoints ?? 320).toLocaleString('id-ID')} pts</Text>
+            </View>
           </View>
-          <View style={styles.exchangeBannerBtn}>
-            <Feather name="arrow-right" size={14} color={colors.white} />
-          </View>
-        </View>
+        </ImageBackground>
       </AnimatedPressable>
 
       {/* ─── Category chips ─────────────────────────────────────────────── */}
@@ -480,49 +470,34 @@ const styles = StyleSheet.create({
   },
   heroSlide: {
     minHeight: 224,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   heroCard: {
     width: '100%',
     minHeight: 224,
+    borderRadius: 24,
     overflow: 'hidden',
     backgroundColor: colors.forest,
-    flexDirection: 'row',
-    alignItems: 'center',
+    ...shadows.md,
   },
-  heroOrbOne: {
-    position: 'absolute',
-    width: 250,
-    height: 250,
-    borderRadius: 125,
-    right: -90,
-    top: -100,
-    backgroundColor: 'rgba(232,220,200,0.08)',
-  },
-  heroOrbTwo: {
-    position: 'absolute',
-    width: 170,
-    height: 170,
-    borderRadius: 85,
-    left: -72,
-    bottom: -96,
-    backgroundColor: 'rgba(201,123,99,0.15)',
-  },
-  heroOrbThree: {
-    position: 'absolute',
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    right: 18,
-    bottom: -40,
-    backgroundColor: 'rgba(232,220,200,0.05)',
-  },
-  heroContent: {
-    width: '64%',
+  heroImageBg: {
+    width: '100%',
     minHeight: 224,
     justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 18,
-    paddingBottom: 30,
+  },
+  heroGradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(28, 43, 33, 0.65)',
+    borderRadius: 24,
+  },
+  heroContent: {
+    width: '80%',
+    minHeight: 224,
+    justifyContent: 'center',
+    paddingHorizontal: 22,
+    paddingTop: 20,
+    paddingBottom: 28,
     zIndex: 2,
   },
   heroBadge: {
@@ -533,10 +508,8 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: 'rgba(232,220,200,0.18)',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(232,220,200,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    marginBottom: 10,
   },
   heroBadgeText: {
     color: colors.sand,
@@ -552,76 +525,37 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   heroCopy: {
-    color: 'rgba(255,255,255,0.72)',
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 11,
     lineHeight: 16,
     marginTop: 6,
-    maxWidth: 210,
+    maxWidth: 240,
   },
   heroButton: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    paddingVertical: 3,
+    paddingVertical: 4,
     marginTop: 12,
   },
   heroButtonText: {
     color: colors.sand,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '900',
   },
   heroButtonArrow: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(232,220,200,0.18)',
-  },
-  heroRight: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: '42%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 10,
-  },
-  heroVisualRingOuter: {
-    position: 'absolute',
-    width: 164,
-    height: 164,
-    borderRadius: 82,
-    borderWidth: 1,
-    borderColor: 'rgba(232,220,200,0.16)',
-  },
-  heroVisualRingInner: {
-    position: 'absolute',
-    width: 108,
-    height: 108,
-    borderRadius: 54,
-    borderWidth: 1,
-    borderColor: 'rgba(232,220,200,0.20)',
-  },
-  heroVisualMark: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroVisualLabel: {
-    color: 'rgba(255,255,255,0.52)',
-    fontSize: 8,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginTop: 12,
+    backgroundColor: 'rgba(255,255,255,0.20)',
   },
   heroDots: {
     position: 'absolute',
-    left: 20,
-    bottom: 13,
+    left: 36,
+    bottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -834,21 +768,42 @@ const styles = StyleSheet.create({
     lineHeight: 13,
     textAlign: 'center',
   },
-  // ─── Custom Design Banner Styles ───────────────────────────────────────────
-  customBanner: {
-    borderRadius: 24,
-    backgroundColor: colors.sandLight,
-    borderWidth: 1.5,
-    borderColor: colors.lightGray,
-    padding: 18,
+  // ─── Image Banners ─────────────────────────────────────────────────────────
+  bannerImageBg: {
+    width: '100%',
+    minHeight: 110,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    padding: 16,
+  },
+  bannerGradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(28, 43, 33, 0.72)',
+    borderRadius: 20,
+  },
+  bannerGradientOverlayDark: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(48, 30, 24, 0.72)',
+    borderRadius: 20,
+  },
+  bannerArrowBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.20)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customBanner: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginBottom: 16,
     ...shadows.sm,
   },
   customBannerContent: {
     flex: 1,
     paddingRight: 12,
+    zIndex: 2,
   },
   customBadge: {
     alignSelf: 'flex-start',
@@ -859,7 +814,7 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   customBadgeText: {
     color: colors.white,
@@ -868,43 +823,27 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   customBannerTitle: {
-    color: colors.charcoal,
-    fontSize: 16,
+    color: colors.white,
+    fontSize: 15,
     fontWeight: '900',
     letterSpacing: -0.3,
   },
   customBannerDesc: {
-    color: colors.warmGray,
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 4,
+    color: 'rgba(255,255,255,0.80)',
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 3,
   },
-  customBannerIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.lightGray,
-    ...shadows.sm,
-  },
-  // ─── Exchange Banner Styles ───────────────────────────────────────────────
   exchangeBanner: {
-    borderRadius: 24,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: 'rgba(201,123,99,0.3)',
-    padding: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 20,
+    overflow: 'hidden',
     marginBottom: 20,
     ...shadows.sm,
   },
   exchangeBannerContent: {
     flex: 1,
     paddingRight: 12,
+    zIndex: 2,
   },
   exchangeBadge: {
     alignSelf: 'flex-start',
@@ -915,7 +854,7 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   exchangeBadgeText: {
     color: colors.white,
@@ -923,42 +862,23 @@ const styles = StyleSheet.create({
     fontWeight: '850',
     letterSpacing: 0.4,
   },
-  exchangeBannerTitle: {
-    color: colors.charcoal,
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  exchangeBannerDesc: {
-    color: colors.warmGray,
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: 4,
-  },
   exchangeBannerRight: {
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    zIndex: 2,
   },
   exchangePointPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: colors.warningLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   exchangePointText: {
     fontSize: 11,
     fontWeight: '800',
     color: colors.warning,
-  },
-  exchangeBannerBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.terracotta,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

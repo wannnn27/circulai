@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -20,7 +21,6 @@ const stepThemes = [
   {
     color: colors.forest,
     accent: colors.sand,
-    wash: 'rgba(232,220,200,0.44)',
     icon: 'tshirt-crew-outline',
     sceneLabel: 'Profil gaya personal',
     features: [
@@ -32,7 +32,6 @@ const stepThemes = [
   {
     color: '#7F4C3D',
     accent: '#DFA58F',
-    wash: 'rgba(201,123,99,0.16)',
     icon: 'recycle',
     sceneLabel: 'Dibuat setelah dipesan',
     features: [
@@ -44,7 +43,6 @@ const stepThemes = [
   {
     color: '#31485B',
     accent: colors.sand,
-    wash: 'rgba(49,72,91,0.10)',
     icon: 'account-group-outline',
     sceneLabel: 'Dikerjakan penjahit lokal',
     features: [
@@ -55,22 +53,24 @@ const stepThemes = [
   },
 ];
 
-function StoryScene({ theme, compact }) {
+function StoryScene({ item, theme, compact }) {
   return (
     <View style={[styles.scene, compact && styles.sceneCompact]}>
-      <View
-        style={[
-          styles.iconBackdrop,
-          compact && styles.iconBackdropCompact,
-          { backgroundColor: theme.wash },
-        ]}
-      >
-        <MaterialCommunityIcons name={theme.icon} size={compact ? 72 : 88} color={theme.color} />
-      </View>
-
-      <View style={styles.sceneLabel}>
-        <View style={[styles.sceneLabelDot, { backgroundColor: theme.color }]} />
-        <Text style={styles.sceneLabelText}>{theme.sceneLabel}</Text>
+      <View style={styles.imageCardContainer}>
+        {item?.image ? (
+          <Image
+            source={{ uri: item.image }}
+            style={styles.sceneImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.fallbackBg, { backgroundColor: theme.color }]} />
+        )}
+        <View style={styles.imageOverlay} />
+        <View style={styles.tagBadge}>
+          <MaterialCommunityIcons name={theme.icon} size={14} color={colors.white} />
+          <Text style={styles.tagBadgeText}>{item.tag || theme.sceneLabel}</Text>
+        </View>
       </View>
     </View>
   );
@@ -151,9 +151,6 @@ export default function OnboardingScreen({ onDone }) {
 
   return (
     <View style={[layout.screen, styles.screen, compact && styles.screenCompact]}>
-      <View style={styles.backgroundOrbOne} />
-      <View style={styles.backgroundOrbTwo} />
-
       <View style={styles.topBar}>
         <View style={styles.brand}>
           <View style={styles.brandMark}>
@@ -196,7 +193,7 @@ export default function OnboardingScreen({ onDone }) {
           },
         ]}
       >
-        <StoryScene theme={theme} compact={compact} />
+        <StoryScene item={item} theme={theme} compact={compact} />
 
         <View style={[styles.copyBlock, compact && styles.copyBlockCompact]}>
           <View style={styles.stepPill}>
@@ -271,24 +268,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 14,
   },
-  backgroundOrbOne: {
-    position: 'absolute',
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    top: -120,
-    right: -120,
-    backgroundColor: 'rgba(232,220,200,0.42)',
-  },
-  backgroundOrbTwo: {
-    position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    left: -90,
-    bottom: 110,
-    backgroundColor: 'rgba(201,123,99,0.06)',
-  },
   topBar: {
     minHeight: 42,
     flexDirection: 'row',
@@ -362,37 +341,50 @@ const styles = StyleSheet.create({
     height: 260,
     alignItems: 'center',
     justifyContent: 'center',
+    marginVertical: 6,
   },
   sceneCompact: {
     height: 200,
   },
-  iconBackdrop: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    alignItems: 'center',
-    justifyContent: 'center',
+  imageCardContainer: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: colors.sandLight,
+    ...shadows.md,
   },
-  iconBackdropCompact: {
-    width: 142,
-    height: 142,
-    borderRadius: 71,
+  sceneImage: {
+    width: '100%',
+    height: '100%',
   },
-  sceneLabel: {
+  fallbackBg: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(31, 36, 33, 0.18)',
+  },
+  tagBadge: {
+    position: 'absolute',
+    bottom: 14,
+    left: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
-    marginTop: 16,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 99,
+    backgroundColor: 'rgba(31, 48, 38, 0.78)',
   },
-  sceneLabelDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  sceneLabelText: {
-    color: colors.warmGray,
-    fontSize: 11,
-    fontWeight: '700',
+  tagBadgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
   copyBlock: {
     alignItems: 'center',
