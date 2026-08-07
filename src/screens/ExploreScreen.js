@@ -23,7 +23,7 @@ export default function ExploreScreen({ onProductPress, onNavigate, onBack, wish
     setFilterOpen(opening);
     Animated.parallel([
       Animated.spring(filterHeight, {
-        toValue: opening ? 80 : 0,
+        toValue: opening ? 120 : 0,
         useNativeDriver: false,
         speed: 16,
         bounciness: 2,
@@ -107,7 +107,16 @@ export default function ExploreScreen({ onProductPress, onNavigate, onBack, wish
       </View>
 
       {/* ─── Animated filter panel ──────────────────────────────────────── */}
-      <Animated.View style={[styles.filterPanel, { maxHeight: filterHeight, opacity: filterOpacity }]}>
+      <Animated.View
+        style={[
+          styles.filterPanel,
+          {
+            maxHeight: filterHeight,
+            opacity: filterOpacity,
+            marginBottom: filterOpen ? 14 : 0,
+          },
+        ]}
+      >
         <Text style={styles.filterTitle}>Urutkan berdasarkan</Text>
         <View style={styles.sortRow}>
           {sortOptions.map((item) => (
@@ -302,19 +311,26 @@ const styles = StyleSheet.create({
   // ─── Filter panel ─────────────────────────────────────────────────────────
   filterPanel: {
     overflow: 'hidden',
-    marginBottom: 8,
+    borderRadius: 18,
+    backgroundColor: colors.sandLight,
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    paddingHorizontal: 14,
   },
   filterTitle: {
     color: colors.charcoal,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
+    marginTop: 10,
     marginBottom: 8,
-    letterSpacing: 0.2,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   sortRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 7,
+    paddingBottom: 12,
   },
   sortChip: {
     borderRadius: 9999,

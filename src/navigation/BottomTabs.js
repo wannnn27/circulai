@@ -61,7 +61,7 @@ export default function BottomTabs({ active, onChange }) {
         const isCenter = tab.id === 'quiz';
         const iconColor = selected
           ? isCenter
-            ? colors.white
+            ? colors.forest
             : colors.forest
           : colors.warmGray;
 
@@ -83,8 +83,8 @@ export default function BottomTabs({ active, onChange }) {
               >
                 <MaterialCommunityIcons
                   name="lightning-bolt"
-                  size={22}
-                  color={selected ? colors.white : colors.forest}
+                  size={24}
+                  color={selected ? colors.forest : colors.white}
                 />
               </Animated.View>
             ) : (
@@ -158,23 +158,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconActive: {
-    backgroundColor: 'rgba(47,79,58,0.10)',
+    // backgroundColor: 'rgba(47,79,58,0.10)',
   },
   // ─── Center AI Stylist tab ─────────────────────────────────────────────────
   centerIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 17,
+    width: 64,
+    height: 64,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.sand,
-    marginTop: -22,
+    backgroundColor: colors.forest,
+    marginTop: -32,
     borderWidth: 3,
     borderColor: colors.ivory,
     ...shadows.md,
   },
   centerIconActive: {
-    backgroundColor: colors.forest,
+    backgroundColor: colors.sand,
     borderColor: colors.ivory,
     shadowColor: colors.forest,
     shadowOffset: { width: 0, height: 6 },
