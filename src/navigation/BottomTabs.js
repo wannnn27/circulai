@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconActive: {
-    // backgroundColor: 'rgba(47,79,58,0.10)',
+    backgroundColor: 'rgba(47,79,58,0.10)',
   },
   // ─── Center AI Stylist tab ─────────────────────────────────────────────────
   centerIcon: {
