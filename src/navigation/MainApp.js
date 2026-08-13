@@ -28,6 +28,7 @@ import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import TailorChatScreen from '../screens/TailorChatScreen';
 import ReturnRequestScreen from '../screens/ReturnRequestScreen';
 import ExchangeScreen from '../screens/ExchangeScreen';
+import AuthModal from '../components/AuthModal';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
 import { useAppState } from '../state/AppContext';
@@ -59,7 +60,7 @@ export default function MainApp() {
   const historyRef = useRef([]);
   const screenBackHandlerRef = useRef(null);
   const [mountedTabs, setMountedTabs] = useState(() => new Set(['home']));
-  const { notice, setNotice } = useAppState();
+  const { notice, setNotice, authModalConfig, closeAuthModal } = useAppState();
   const active = route.name;
   const showTabs = MAIN_TABS.includes(active);
 
@@ -422,6 +423,18 @@ export default function MainApp() {
           </Animated.View>
         </Pressable>
       )}
+
+      {/* ─── Auth Modal ──────────────────────────────────────────────── */}
+      <AuthModal
+        visible={authModalConfig?.visible ?? false}
+        message={authModalConfig?.message}
+        onClose={closeAuthModal}
+        onSuccess={() => {
+          if (authModalConfig?.onSuccess) {
+            authModalConfig.onSuccess();
+          }
+        }}
+      />
     </View>
   );
 }

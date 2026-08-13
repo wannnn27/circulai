@@ -30,8 +30,8 @@ const stepThemes = [
     ],
   },
   {
-    color: '#7F4C3D',
-    accent: '#DFA58F',
+    color: colors.forestMid,
+    accent: colors.sand,
     icon: 'recycle',
     sceneLabel: 'Dibuat setelah dipesan',
     features: [
@@ -41,7 +41,7 @@ const stepThemes = [
     ],
   },
   {
-    color: '#31485B',
+    color: colors.forestDark,
     accent: colors.sand,
     icon: 'account-group-outline',
     sceneLabel: 'Dikerjakan penjahit lokal',

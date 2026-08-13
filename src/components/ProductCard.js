@@ -4,7 +4,13 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AnimatedPressable from './AnimatedPressable';
 import { colors, shadows } from '../theme/colors';
-import { formatCurrency } from '../data/appData';
+import { computeEcoScore, formatCurrency } from '../data/appData';
+
+function getEcoColor(score) {
+  if (score >= 70) return { bg: colors.successLight, text: colors.success };
+  if (score >= 40) return { bg: colors.warningLight, text: colors.warning };
+  return { bg: colors.errorLight, text: colors.error };
+}
 
 export default function ProductCard({
   product,
@@ -13,6 +19,9 @@ export default function ProductCard({
   onPress,
   onToggleFavorite,
 }) {
+  const ecoScore = computeEcoScore(product);
+  const ecoTheme = getEcoColor(ecoScore);
+
   if (grid) {
     // ─── Compact Grid Card ─────────────────────────────────────────────
     return (
@@ -42,10 +51,15 @@ export default function ProductCard({
             />
           </AnimatedPressable>
 
-          {/* Saved badge — bottom left */}
-          <View style={styles.savedBadge}>
-            <MaterialCommunityIcons name="leaf" size={9} color={colors.forest} />
-            <Text style={styles.savedText} numberOfLines={1}>{product.savedFabric}</Text>
+          {/* Badges row — bottom left */}
+          <View style={styles.badgeRowOverlay}>
+            <View style={styles.savedBadge}>
+              <MaterialCommunityIcons name="leaf" size={9} color={colors.forest} />
+              <Text style={styles.savedText} numberOfLines={1}>{product.savedFabric}</Text>
+            </View>
+            <View style={[styles.ecoBadge, { backgroundColor: ecoTheme.bg }]}>
+              <Text style={[styles.ecoBadgeText, { color: ecoTheme.text }]}>Eco {ecoScore}</Text>
+            </View>
           </View>
         </ImageBackground>
 
@@ -107,9 +121,15 @@ export default function ProductCard({
           />
         </AnimatedPressable>
 
-        <View style={styles.savedBadge}>
-          <MaterialCommunityIcons name="leaf" size={10} color={colors.forest} />
-          <Text style={styles.savedText}>{product.savedFabric} hemat</Text>
+        <View style={styles.badgeRowOverlay}>
+          <View style={styles.savedBadge}>
+            <MaterialCommunityIcons name="leaf" size={10} color={colors.forest} />
+            <Text style={styles.savedText}>{product.savedFabric} hemat</Text>
+          </View>
+          <View style={[styles.ecoBadge, { backgroundColor: ecoTheme.bg }]}>
+            <MaterialCommunityIcons name="shield-check-outline" size={10} color={ecoTheme.text} />
+            <Text style={[styles.ecoBadgeText, { color: ecoTheme.text }]}>Eco Score {ecoScore}</Text>
+          </View>
         </View>
       </ImageBackground>
 
@@ -301,8 +321,16 @@ const styles = StyleSheet.create({
     height: 34,
     margin: 10,
   },
-  savedBadge: {
+  badgeRowOverlay: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    margin: 8,
+    marginTop: 0,
+    flexWrap: 'wrap'
+  },
+  savedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
@@ -310,9 +338,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     backgroundColor: 'rgba(255,255,255,0.94)',
-    margin: 8,
-    marginTop: 0,
     ...shadows.sm,
+  },
+  ecoBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderRadius: 9999,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    ...shadows.sm,
+  },
+  ecoBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
   },
   savedText: {
     color: colors.forest,

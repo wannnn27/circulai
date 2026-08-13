@@ -1,6 +1,9 @@
-# CIRCULAI Backend
+# CIRCULAI Backend (Development Fallback)
+
+> ⚠️ **Development-only fallback.** Versi produksi dan demo utama menggunakan Supabase Backend (`EXPO_PUBLIC_DATA_BACKEND=supabase`). Server Node lokal ini hanya disediakan sebagai fallback pengembangan tanpa koneksi internet.
 
 Backend MVP ini memakai Node HTTP bawaan, jadi tidak perlu install dependency tambahan.
+
 Data disimpan lokal di `server/data/store.json` dan otomatis dibuat dari seed saat server pertama kali jalan.
 
 ## Menjalankan

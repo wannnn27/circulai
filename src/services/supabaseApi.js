@@ -1,6 +1,7 @@
 import {
   canRequestReturn,
   categories as fallbackCategories,
+  computeEcoScore,
   createOrderFromCart,
   normalizeOrder,
   orderSteps,
@@ -64,6 +65,7 @@ function productFromRow(row) {
     eta: row.eta,
     rating: Number(row.rating ?? 0),
     savedFabric: row.saved_fabric,
+    ecoScore: Number(row.eco_score ?? computeEcoScore(row)),
     material: row.material,
     color: row.color,
     image: row.image,
@@ -649,5 +651,18 @@ export const supabaseApi = {
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(messagesChannel);
     };
+  },
+
+  async getAiStylistRecommendation(answers, ruleBasedResult) {
+    try {
+      await ensureSession();
+      const { data, error } = await supabase.functions.invoke('stylist-recommend', {
+        body: { ...answers, ruleBasedResult }
+      });
+      if (error || data?.error) return { narrative: null };
+      return data?.data ?? data ?? { narrative: null };
+    } catch {
+      return { narrative: null };
+    }
   }
 };
