@@ -11,8 +11,12 @@ import { colors, shadows } from '../theme/colors';
 
 export default function CartScreen({ onBack, onContinue, onExplore }) {
   const insets = useSafeAreaInsets();
-  const { cart, cartSummary, removeFromCart, updateCartQuantity } = useAppState();
+  const { cart, cartSummary, removeFromCart, updateCartQuantity, requireAuth } = useAppState();
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleContinue = () => {
+    requireAuth(onContinue, 'Silakan masuk ke akun CIRCULAI untuk memilih alamat & membuat pesanan.');
+  };
 
   return (
     <View style={styles.screen}>
@@ -47,7 +51,7 @@ export default function CartScreen({ onBack, onContinue, onExplore }) {
               <View style={styles.divider} />
               <SummaryRow label="Total" value={formatCurrency(cartSummary.total)} strong />
             </View>
-            <AnimatedPressable style={styles.primary} onPress={onContinue}>
+            <AnimatedPressable style={styles.primary} onPress={handleContinue}>
               <Text style={styles.primaryText}>Pilih Alamat Pengiriman</Text>
               <Feather name="arrow-right" size={17} color={colors.white} />
             </AnimatedPressable>

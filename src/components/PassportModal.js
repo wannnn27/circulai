@@ -3,7 +3,7 @@ import { Animated, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View }
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { formatCurrency, getOrderTimeline, orderStatusIndex, orderSteps } from '../data/appData';
+import { computeEcoScore, formatCurrency, getOrderTimeline, orderStatusIndex, orderSteps } from '../data/appData';
 import { colors, shadows } from '../theme/colors';
 
 const tabs = [
@@ -234,6 +234,7 @@ function PassportDetail({ order }) {
   const [selectedPassportId, setSelectedPassportId] = useState(passports[0]?.id);
   const passport = passports.find((item) => item.id === selectedPassportId) ?? passports[0] ?? {};
   const isActive = passport.status === 'ACTIVE';
+  const ecoScore = computeEcoScore(order);
 
   useEffect(() => {
     setSelectedPassportId(passports[0]?.id);
@@ -252,6 +253,9 @@ function PassportDetail({ order }) {
     ['Diterbitkan', passport.issuedAt],
     ['Diaktifkan', passport.activatedAt],
   ];
+
+  const ecoColor = ecoScore >= 70 ? colors.success : ecoScore >= 40 ? colors.warning : colors.error;
+  const ecoLabel = ecoScore >= 70 ? 'Sangat Baik' : ecoScore >= 40 ? 'Baik' : 'Standar';
 
   return (
     <>
@@ -299,15 +303,38 @@ function PassportDetail({ order }) {
           <Text style={[styles.verifiedText, !isActive && styles.pendingText]}>{passport.verification}</Text>
         </View>
         <Text style={styles.passportCopy}>
-          Setiap unit produk memiliki passport berbeda yang mencatat material, pembuat, asal produksi, dan dampaknya.
+          Digital Product Passport mencatat jejak asal material, pembuat, dan dampak lingkungan setiap produk — langkah awal menuju transparansi rantai pasok fashion yang penuh.
         </Text>
       </View>
 
+      <SectionTitle icon="shield" title="Skor Keberlanjutan (Eco-Score)" />
+      <View style={styles.ecoCard}>
+        <View style={styles.ecoCardHeader}>
+          <View style={styles.ecoScoreBadge}>
+            <MaterialCommunityIcons name="leaf" size={16} color={ecoColor} />
+            <Text style={[styles.ecoScoreNum, { color: ecoColor }]}>{ecoScore}</Text>
+            <Text style={styles.ecoScoreMax}>/ 100</Text>
+          </View>
+          <Text style={[styles.ecoScoreCategory, { color: ecoColor }]}>{ecoLabel}</Text>
+        </View>
+        <View style={styles.ecoTrack}>
+          <View style={[styles.ecoFill, { width: `${ecoScore}%`, backgroundColor: ecoColor }]} />
+        </View>
+        <Text style={styles.ecoDesc}>
+          Dihitung berdasarkan pemanfaatan kain sisa, skema made-to-order, dan estimasi pengurangan limbah tekstil.
+        </Text>
+      </View>
+
+      <SectionTitle icon="file-text" title="Spesifikasi Traceability" />
       <View style={styles.dataCard}>
         {passportRows.map(([label, value], index) => (
           <DataRow key={label} label={label} value={value} last={index === passportRows.length - 1} />
         ))}
       </View>
+
+      <Text style={styles.passportFooterNote}>
+        Versi 1.0 — Data bersumber dari pendaftaran tailor yang terverifikasi. Integrasi sensor IoT dan verifikasi pihak ketiga tersedia di roadmap pengemabangan.
+      </Text>
     </>
   );
 }
@@ -811,12 +838,73 @@ const styles = StyleSheet.create({
     color: colors.warning,
   },
   passportCopy: {
-    maxWidth: 290,
+    maxWidth: 310,
     color: colors.warmGray,
     fontSize: 10,
     lineHeight: 15,
     textAlign: 'center',
     marginTop: 8,
-    marginBottom: 14,
+    marginBottom: 4,
+  },
+  ecoCard: {
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    marginBottom: 4,
+  },
+  ecoCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  ecoScoreBadge: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  ecoScoreNum: {
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  ecoScoreMax: {
+    fontSize: 11,
+    color: colors.warmGray,
+    fontWeight: '700',
+  },
+  ecoScoreCategory: {
+    fontSize: 12,
+    fontWeight: '800',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    backgroundColor: colors.ivory,
+  },
+  ecoTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.lightGray,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  ecoFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  ecoDesc: {
+    fontSize: 10,
+    color: colors.warmGray,
+    lineHeight: 14,
+  },
+  passportFooterNote: {
+    fontSize: 9,
+    color: colors.warmGrayLight,
+    lineHeight: 13,
+    textAlign: 'center',
+    marginTop: 12,
+    fontStyle: 'italic',
+    paddingHorizontal: 8,
   },
 });

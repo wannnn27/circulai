@@ -12,16 +12,17 @@ import {
   skinTones,
   styleVibes
 } from '../data/appData';
+import { api } from '../services/api';
 import { useAppState } from '../state/AppContext';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
 
 const loadingSteps = [
-  'Menganalisis warna kulit...',
-  'Memetakan bentuk tubuh...',
-  'Memproses preferensi gaya...',
-  'Mencocokkan dengan database lokal...',
-  'Menyusun rekomendasi personalmu...'
+  'Menganalisis profil warna kulitmu...',
+  'Memetakan proporsi tubuh...',
+  'Mencocokkan preferensi gaya...',
+  'Menyusun rekomendasi berbasis data...',
+  'Memfinalisasi profil gaya personalmu...'
 ];
 
 export default function StylistScreen({
@@ -396,6 +397,28 @@ function AnalyzingScreen({ loadingIndex }) {
 
 function ResultScreen({ result, onBack, onRestart, onNavigate, onProductPress, products, wishlist, toggleWishlist }) {
   const recommended = products.slice(0, 2);
+  const [aiNarrative, setAiNarrative] = useState(null);
+  const [loadingAi, setLoadingAi] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (api.getAiStylistRecommendation) {
+      setLoadingAi(true);
+      api.getAiStylistRecommendation({}, result)
+        .then((res) => {
+          if (active && res?.narrative) {
+            setAiNarrative(res.narrative);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (active) setLoadingAi(false);
+        });
+    }
+    return () => {
+      active = false;
+    };
+  }, [result]);
 
   return (
     <ScrollView style={layout.scroll} contentContainerStyle={layout.scrollContent} showsVerticalScrollIndicator={false}>
@@ -411,8 +434,25 @@ function ResultScreen({ result, onBack, onRestart, onNavigate, onProductPress, p
       <Text style={styles.resultTitle}>{result.archetype}</Text>
       <Text style={styles.resultTagline}>"{result.tagline}"</Text>
 
+      {!!aiNarrative && (
+        <View style={styles.aiInsightCard}>
+          <View style={styles.aiInsightHeader}>
+            <Feather name="cpu" size={15} color={colors.forest} />
+            <Text style={styles.aiInsightLabel}>AI PERSONAL INSIGHT</Text>
+          </View>
+          <Text style={styles.aiInsightText}>{aiNarrative}</Text>
+        </View>
+      )}
+
+      {loadingAi && !aiNarrative && (
+        <View style={styles.aiInsightCardLoading}>
+          <Feather name="loader" size={14} color={colors.warmGray} />
+          <Text style={styles.aiInsightLoadingText}>Mengonsultasikan profil dengan AI LLM...</Text>
+        </View>
+      )}
+
       <View style={styles.analysisCard}>
-        <Text style={styles.analysisLabel}>ANALISIS AI</Text>
+        <Text style={styles.analysisLabel}>ANALISIS PROFIL</Text>
         <Text style={styles.analysisText}>{result.analysis}</Text>
       </View>
 
@@ -851,6 +891,46 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginTop: 4,
     marginBottom: 16
+  },
+  aiInsightCard: {
+    borderRadius: 20,
+    padding: 16,
+    backgroundColor: 'rgba(47,79,58,0.07)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(47,79,58,0.18)',
+    marginBottom: 14
+  },
+  aiInsightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8
+  },
+  aiInsightLabel: {
+    color: colors.forest,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1
+  },
+  aiInsightText: {
+    color: colors.charcoal,
+    fontSize: 13,
+    lineHeight: 19,
+    fontWeight: '500'
+  },
+  aiInsightCardLoading: {
+    borderRadius: 18,
+    padding: 14,
+    backgroundColor: colors.sandLight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 14
+  },
+  aiInsightLoadingText: {
+    color: colors.warmGray,
+    fontSize: 12,
+    fontWeight: '600'
   },
   analysisCard: {
     borderRadius: 20,

@@ -33,7 +33,7 @@ const MEASUREMENTS = [
 
 export default function CustomDesignScreen({ onBack, onAddedToCart, registerBackHandler }) {
   const insets = useSafeAreaInsets();
-  const { addToCart } = useAppState();
+  const { addToCart, requireAuth } = useAppState();
   const [step, setStep] = useState(1); // 1: Model, 2: Fabric, 3: Details, 4: Size
 
   // Design state
@@ -79,26 +79,30 @@ export default function CustomDesignScreen({ onBack, onAddedToCart, registerBack
       },
     };
 
-    Alert.alert(
-      'Konfirmasi Desain Kustom',
-      `${customProduct.name}\n${fabric.label}\n${collar} · ${sleeve}\nUkuran: ${size}\nTotal: ${formatCurrency(totalPrice)}`,
-      [
-        { text: 'Periksa Lagi', style: 'cancel' },
-        {
-          text: 'Tambah ke Keranjang',
-          onPress: () => {
-            addToCart(customProduct, {
-              color: { id: 'custom', label: 'Sesuai desain', hex: '#2F4F3A' },
-              fabric: { id: fabric.id, label: fabric.label, extraCost: fabric.extra },
-              sizeType: size === 'Custom' ? 'custom' : 'standard',
-              size,
-              measurements: size === 'Custom' ? measurements : null
-            });
-            onAddedToCart();
+    const processAddToCart = () => {
+      addToCart(customProduct, {
+        color: { id: 'custom', label: 'Sesuai desain', hex: '#3DA829' },
+        fabric: { id: fabric.id, label: fabric.label, extraCost: fabric.extra },
+        sizeType: size === 'Custom' ? 'custom' : 'standard',
+        size,
+        measurements: size === 'Custom' ? measurements : null
+      });
+      onAddedToCart();
+    };
+
+    requireAuth(() => {
+      Alert.alert(
+        'Konfirmasi Desain Kustom',
+        `${customProduct.name}\n${fabric.label}\n${collar} · ${sleeve}\nUkuran: ${size}\nTotal: ${formatCurrency(totalPrice)}`,
+        [
+          { text: 'Periksa Lagi', style: 'cancel' },
+          {
+            text: 'Tambah ke Keranjang',
+            onPress: processAddToCart,
           },
-        },
-      ]
-    );
+        ]
+      );
+    }, 'Silakan masuk ke akun CIRCULAI untuk memesan produk kustom.');
   };
 
   const next = () => {

@@ -174,6 +174,8 @@ export function AppProvider({ children }) {
   const [notice, setNotice] = useState(null);
   const [hydrated, setHydrated] = useState(false);
   const [backendStatus, setBackendStatus] = useState('connecting');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authModalConfig, setAuthModalConfig] = useState({ visible: false, message: '', onSuccess: null });
   // ─── Circular Exchange ────────────────────────────────────────────────────
   const [circularPoints, setCircularPoints] = useState(320);
   const [exchangeHistory, setExchangeHistory] = useState([]);
@@ -194,6 +196,7 @@ export function AppProvider({ children }) {
     setAddresses(Array.isArray(data.addresses) && data.addresses.length ? data.addresses : savedAddresses);
     setStyleProfile(data.styleProfile ?? null);
     setUserProfile({ ...defaultUserProfile, ...(data.user ?? {}) });
+    if (typeof data.isLoggedIn === 'boolean') setIsLoggedIn(data.isLoggedIn);
     setMeasurements({ ...defaultMeasurements, ...(data.measurements ?? {}) });
     setPreferences({
       notifications: { ...defaultPreferences.notifications, ...(data.preferences?.notifications ?? {}) },
@@ -245,6 +248,7 @@ export function AppProvider({ children }) {
           addresses: parsed.addresses,
           styleProfile: parsed.styleProfile,
           user: parsed.userProfile,
+          isLoggedIn: parsed.isLoggedIn,
           measurements: parsed.measurements,
           preferences: parsed.preferences,
           conversations: parsed.conversations,
@@ -312,6 +316,7 @@ export function AppProvider({ children }) {
         addresses,
         styleProfile,
         userProfile,
+        isLoggedIn,
         measurements,
         preferences,
         conversations,
@@ -328,6 +333,7 @@ export function AppProvider({ children }) {
     conversations,
     exchangeHistory,
     hydrated,
+    isLoggedIn,
     measurements,
     orders,
     paymentMethods,
@@ -340,6 +346,36 @@ export function AppProvider({ children }) {
     userVouchers,
     wishlist
   ]);
+
+  const openAuthModal = useCallback((message = '', onSuccess = null) => {
+    setAuthModalConfig({ visible: true, message, onSuccess });
+  }, []);
+
+  const closeAuthModal = useCallback(() => {
+    setAuthModalConfig((prev) => ({ ...prev, visible: false }));
+  }, []);
+
+  const login = useCallback((userData = {}) => {
+    setIsLoggedIn(true);
+    if (userData.name || userData.email) {
+      setUserProfile((prev) => ({ ...prev, ...userData }));
+    }
+    setNotice(`Selamat datang, ${userData.name || userProfile.name || 'Member'}!`);
+  }, [userProfile.name]);
+
+  const logout = useCallback(() => {
+    setIsLoggedIn(false);
+    setNotice('Kamu telah keluar dari akun');
+  }, []);
+
+  const requireAuth = useCallback((onSuccess, message = 'Silakan masuk ke akun kamu terlebih dahulu untuk melanjutkan pesanan.') => {
+    if (isLoggedIn) {
+      if (onSuccess) onSuccess();
+      return true;
+    }
+    openAuthModal(message, onSuccess);
+    return false;
+  }, [isLoggedIn, openAuthModal]);
 
   const runRemote = useCallback(async (operation, onSuccess) => {
     if (!backendOnlineRef.current) return false;
@@ -752,6 +788,13 @@ export function AppProvider({ children }) {
 
   const value = useMemo(
     () => ({
+      isLoggedIn,
+      authModalConfig,
+      openAuthModal,
+      closeAuthModal,
+      login,
+      logout,
+      requireAuth,
       products,
       tailors,
       categories,
@@ -803,18 +846,24 @@ export function AppProvider({ children }) {
       addAddress,
       addToCart,
       addresses,
+      authModalConfig,
       backendStatus,
       cart,
       cartSummary,
       categories,
       circularPoints,
       clearCart,
+      closeAuthModal,
       conversations,
       createMidtransPayment,
       exchangeHistory,
       getTailorByName,
+      isLoggedIn,
+      login,
+      logout,
       measurements,
       notice,
+      openAuthModal,
       orders,
       paymentMethods,
       placeOrder,
@@ -824,6 +873,7 @@ export function AppProvider({ children }) {
       refreshBackend,
       removeAddress,
       removeFromCart,
+      requireAuth,
       resetAccountData,
       resetStyleProfile,
       saveMeasurements,

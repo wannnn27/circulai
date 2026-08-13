@@ -18,13 +18,13 @@ import { deleteProfilePhoto, pickProfilePhoto } from '../utils/profilePhoto';
 const menuIconColors = {
   zap: { bg: '#FFF3E0', color: '#E65100' },
   heart: { bg: '#FDE8E8', color: '#C94C4C' },
-  'maximize-2': { bg: '#E8F5E9', color: '#2E7D32' },
+  'maximize-2': { bg: '#E8F7E4', color: '#3DA829' },
   'map-pin': { bg: '#E3F2FD', color: '#1565C0' },
   award: { bg: '#F3E5F5', color: '#7B1FA2' },
   bell: { bg: '#E8EAF6', color: '#3949AB' },
-  shield: { bg: '#E8F5E9', color: '#2E7D32' },
+  shield: { bg: '#E8F7E4', color: '#3DA829' },
   'help-circle': { bg: '#FFF8E1', color: '#F57F17' },
-  'file-text': { bg: '#F1F8E9', color: '#558B2F' },
+  'file-text': { bg: '#E8F7E4', color: '#3DA829' },
   'refresh-cw': { bg: '#FDF4E3', color: '#D99A3D' },
 };
 
@@ -40,7 +40,10 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
     styleProfile,
     updateUserProfile,
     userProfile,
-    wishlist
+    wishlist,
+    isLoggedIn,
+    openAuthModal,
+    logout,
   } = useAppState();
 
   const handlePhotoChange = async () => {
@@ -60,17 +63,20 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
   };
 
   const handleLogout = () => {
+    if (!isLoggedIn) {
+      openAuthModal('Masuk untuk mengakses semua fitur personalisasi.');
+      return;
+    }
     Alert.alert(
       'Keluar dari akun?',
-      'Data personalisasi lokal, wishlist, dan pengaturan akun akan direset.',
+      'Kamu akan keluar dari akun CIRCULAI.',
       [
         { text: 'Batal', style: 'cancel' },
         {
           text: 'Keluar',
           style: 'destructive',
           onPress: () => {
-            resetAccountData();
-            onNavigate('home');
+            logout();
           }
         }
       ]
@@ -95,30 +101,49 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
           <IconButton name="bell" variant="inverted" size="md" onPress={() => setActivePanel('notifications')} />
         </View>
 
-        <View style={styles.userRow}>
-          <View style={styles.avatarRing}>
-            <ProfileAvatar
-              editable
-              light
-              name={userProfile.name}
-              photoUri={userProfile.photoUri}
-              size={62}
-              onPress={handlePhotoChange}
-            />
-          </View>
-
-          <Pressable style={styles.userInfo} onPress={() => setActivePanel('profile')}>
-            <Text style={styles.userName}>{userProfile.name}</Text>
-            <Text style={styles.userEmail}>{userProfile.email}</Text>
-            <View style={styles.memberBadge}>
-              <LeafMark color={colors.sand} size={14} />
-              <Text style={styles.memberBadgeText}>CIRCULAI Member</Text>
+        {!isLoggedIn ? (
+          <View style={styles.guestHeroRow}>
+            <View style={styles.guestAvatar}>
+              <Feather name="user" size={32} color={colors.sand} />
             </View>
-          </Pressable>
-          <Pressable style={styles.editProfile} onPress={() => setActivePanel('profile')}>
-            <Feather name="edit-2" size={13} color={colors.sand} />
-          </Pressable>
-        </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userName}>Tamu / Pengunjung</Text>
+              <Text style={styles.userEmail}>Masuk untuk menikmati semua fitur</Text>
+              <AnimatedPressable
+                style={styles.guestLoginBtn}
+                onPress={() => openAuthModal('Masuk ke akun CIRCULAI kamu.')}
+                scaleDown={0.95}
+              >
+                <Text style={styles.guestLoginBtnText}>Masuk / Daftar Akun</Text>
+              </AnimatedPressable>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.userRow}>
+            <View style={styles.avatarRing}>
+              <ProfileAvatar
+                editable
+                light
+                name={userProfile.name}
+                photoUri={userProfile.photoUri}
+                size={62}
+                onPress={handlePhotoChange}
+              />
+            </View>
+
+            <Pressable style={styles.userInfo} onPress={() => setActivePanel('profile')}>
+              <Text style={styles.userName}>{userProfile.name}</Text>
+              <Text style={styles.userEmail}>{userProfile.email}</Text>
+              <View style={styles.memberBadge}>
+                <LeafMark color={colors.sand} size={14} />
+                <Text style={styles.memberBadgeText}>CIRCULAI Member</Text>
+              </View>
+            </Pressable>
+            <Pressable style={styles.editProfile} onPress={() => setActivePanel('profile')}>
+              <Feather name="edit-2" size={13} color={colors.sand} />
+            </Pressable>
+          </View>
+        )}
       </View>
 
       {/* ─── Floating stats card ──────────────────────────────────────────── */}
@@ -226,16 +251,18 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
         </View>
       ))}
 
-      {/* ─── Logout ───────────────────────────────────────────────────────── */}
+      {/* ─── Logout / Login ─────────────────────────────────────────────────── */}
       <AnimatedPressable
-        style={styles.logoutButton}
+        style={[styles.logoutButton, !isLoggedIn && styles.loginGuestButton]}
         onPress={handleLogout}
         scaleDown={0.97}
       >
-        <View style={styles.logoutIcon}>
-          <Feather name="log-out" size={16} color={colors.error} />
+        <View style={[styles.logoutIcon, !isLoggedIn && styles.loginGuestIcon]}>
+          <Feather name={isLoggedIn ? 'log-out' : 'log-in'} size={16} color={isLoggedIn ? colors.error : colors.forest} />
         </View>
-        <Text style={styles.logoutText}>Keluar dari Akun</Text>
+        <Text style={[styles.logoutText, !isLoggedIn && styles.loginGuestText]}>
+          {isLoggedIn ? 'Keluar dari Akun' : 'Masuk ke Akun CIRCULAI'}
+        </Text>
       </AnimatedPressable>
 
       {/* App version */}
@@ -305,6 +332,32 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '900',
     letterSpacing: -0.3,
+  },
+  guestHeroRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  guestAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestLoginBtn: {
+    backgroundColor: colors.sand,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  guestLoginBtnText: {
+    color: colors.forest,
+    fontSize: 12,
+    fontWeight: '900',
   },
   userRow: {
     flexDirection: 'row',
@@ -564,6 +617,16 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     textAlign: 'center',
     fontWeight: '900',
+  },
+  loginGuestButton: {
+    backgroundColor: colors.forestAlpha9,
+    borderColor: colors.forestAlpha20,
+  },
+  loginGuestIcon: {
+    backgroundColor: 'rgba(47,79,58,0.12)',
+  },
+  loginGuestText: {
+    color: colors.forest,
   },
   // ─── App version ──────────────────────────────────────────────────────────
   version: {

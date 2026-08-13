@@ -102,7 +102,8 @@ export const localApi = {
     request('/api/payments/midtrans/snap', {
       method: 'POST',
       body: { orderId }
-    })
+    }),
+  getAiStylistRecommendation: () => Promise.resolve({ narrative: null })
 };
 
 export const api =

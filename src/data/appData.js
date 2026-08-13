@@ -45,6 +45,7 @@ export const products = [
     eta: '5-7 hari',
     rating: 4.9,
     savedFabric: '0.8m',
+    ecoScore: 78,
     material: 'Rayon lokal sisa produksi', // rayon lokal Rp35.000–50.000/m (ulastempat.com)
     color: '#D7B39A',
     image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/6d2ec2e1f3f544a8b4d71c61e34a1467~.jpeg.webp',
@@ -63,6 +64,7 @@ export const products = [
     eta: '7-10 hari',
     rating: 4.8,
     savedFabric: '1.0m',
+    ecoScore: 50,
     material: 'Linen blend deadstock', // linen lokal Rp40.000–100.000/m (ulastempat.com)
     color: '#7D8C55',
     image: 'https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/99/MTA-185118741/brd-74257_full01-473f6415.webp',
@@ -81,6 +83,7 @@ export const products = [
     eta: '4-6 hari',
     rating: 4.7,
     savedFabric: '0.5m',
+    ecoScore: 55,
     material: 'Katun poplin sisa atelier', // katun lokal terjangkau, kualitas medium
     color: '#C97B63',
     image: 'https://batiksolo.com/cdn/shop/files/UCH04391EDIT_427x.jpg?v=1733903172',
@@ -99,6 +102,7 @@ export const products = [
     eta: '6-9 hari',
     rating: 4.8,
     savedFabric: '1.2m',
+    ecoScore: 32,
     material: 'Tenun rayon mixed scraps', // tenun rayon premium, sisa pabrik lokal
     color: '#8E6F5A',
     image: 'https://ethica-collection.com/wp-content/uploads/2023/12/MASAMI-04-KHAKI-WP-1-4.webp',
@@ -117,6 +121,7 @@ export const products = [
     eta: '7-10 hari',
     rating: 4.9,
     savedFabric: '1.1m',
+    ecoScore: 81,
     material: 'Rayon flowy',
     color: '#B96E5B',
     image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/43427d1d8a6642af8db7bbc290ee71d3~.jpeg.webp',
@@ -135,6 +140,7 @@ export const products = [
     eta: '5-7 hari',
     rating: 4.7,
     savedFabric: '0.6m',
+    ecoScore: 26,
     material: 'Linen natural lokal', // linen natural lokal, sesuai tren slow fashion 2025
     color: '#E8DCC8',
     image: 'https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/16d546dcae0c4256abf37973bdb49277~tplv-aphluv4xwc-white-pad-v1:500:500.jpeg',
@@ -213,7 +219,7 @@ export const customizationColors = [
   { id: 'olive', label: 'Olive Earth', hex: '#7D8C55', recommended: true },
   { id: 'terracotta', label: 'Terracotta', hex: '#C97B63', recommended: true },
   { id: 'sand', label: 'Natural Sand', hex: '#E8DCC8', recommended: false },
-  { id: 'forest', label: 'Forest Green', hex: '#2F4F3A', recommended: true },
+  { id: 'forest', label: 'Forest Green', hex: '#3DA829', recommended: true },
   { id: 'charcoal', label: 'Charcoal', hex: '#3A3D38', recommended: false }
 ];
 
@@ -534,7 +540,7 @@ export const donationPartners = [
     desc: 'Program pelatihan menjahit untuk ibu rumah tangga kurang mampu',
     icon: 'home-heart',
     beneficiaries: '124 penerima manfaat',
-    color: '#2F4F3A'
+    color: '#3DA829'
   },
   {
     id: 'desa_binaan',
@@ -568,7 +574,7 @@ export const donationPartners = [
 export const exchangePointTiers = [
   { name: 'Seed', minPoints: 0, maxPoints: 199, color: '#A8A89F', icon: 'seed-outline' },
   { name: 'Green', minPoints: 200, maxPoints: 499, color: '#4F8A5B', icon: 'leaf' },
-  { name: 'Emerald', minPoints: 500, maxPoints: 999, color: '#2F4F3A', icon: 'diamond-stone' },
+  { name: 'Emerald', minPoints: 500, maxPoints: 999, color: '#3DA829', icon: 'diamond-stone' },
   { name: 'Circular', minPoints: 1000, maxPoints: Infinity, color: '#C97B63', icon: 'recycle' }
 ];
 
@@ -584,6 +590,18 @@ export function calcExchangePoints(itemTypeId, quantity) {
 }
 
 // ─── Utility Functions ────────────────────────────────────────────────────────
+
+export function computeEcoScore(product) {
+  if (typeof product?.ecoScore === 'number') return product.ecoScore;
+  if (typeof product?.eco_score === 'number') return product.eco_score;
+  const badges = product?.badges ?? [];
+  const hasScraps = badges.includes('Kain Sisa');
+  const hasMto = badges.includes('Made-to-Order');
+  const fabricNum = parseFloat(String(product?.savedFabric ?? '0').replace(/[^0-9.]/g, '')) || 0;
+  const fabricPoints = Math.min(30, Math.floor(fabricNum / 0.1));
+  const score = 20 + (hasScraps ? 30 : 0) + (hasMto ? 20 : 0) + fabricPoints;
+  return Math.min(100, Math.max(0, score));
+}
 
 export function formatCurrency(value) {
   if (value === null || value === undefined) return 'Rp0';
