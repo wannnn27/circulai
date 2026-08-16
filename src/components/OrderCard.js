@@ -17,14 +17,23 @@ const statusConfig = {
   COMPLETED: { icon: 'award', color: colors.success, label: 'Selesai' },
 };
 
-export default function OrderCard({ order, onDetail, onTracking, onPassport, onChat, onReturn }) {
+export default function OrderCard({ order, onDetail, onTracking, onPassport, onChat, onReturn, onPayOrder }) {
   const currentIndex = orderStatusIndex(order.status);
   const currentStep = orderSteps[currentIndex];
   const statusCfg = statusConfig[order.status] ?? statusConfig.WAITING_PAYMENT;
+  const isUnpaid = order.status === 'WAITING_PAYMENT';
   const returnable = canRequestReturn(order);
   const returnMeta = order.returnRequest
     ? returnStatusMeta[order.returnRequest.status] ?? returnStatusMeta.REVIEWING
     : null;
+
+  const handlePrimaryPress = () => {
+    if (isUnpaid && onPayOrder) {
+      onPayOrder(order);
+    } else {
+      onTracking();
+    }
+  };
 
   return (
     <View style={styles.card}>
@@ -113,6 +122,8 @@ export default function OrderCard({ order, onDetail, onTracking, onPassport, onC
       </View>
 
       {/* ─── Action Buttons ────────────────────────────────────────────── */}
+
+
       {!!order.returnRequest && (
         <AnimatedPressable style={styles.returnNotice} onPress={onReturn} scaleDown={0.98}>
           <View style={styles.returnNoticeIcon}>
@@ -129,9 +140,13 @@ export default function OrderCard({ order, onDetail, onTracking, onPassport, onC
       )}
 
       <View style={styles.actions}>
-        <AnimatedPressable style={styles.primaryAction} onPress={onTracking} scaleDown={0.97}>
-          <Feather name="navigation" size={15} color={colors.white} />
-          <Text style={styles.primaryActionText}>Lacak Pesanan</Text>
+        <AnimatedPressable
+          style={[styles.primaryAction, isUnpaid && styles.unpaidPrimaryAction]}
+          onPress={handlePrimaryPress}
+          scaleDown={0.97}
+        >
+          <Feather name={isUnpaid ? 'credit-card' : 'navigation'} size={15} color={colors.white} />
+          <Text style={styles.primaryActionText}>{isUnpaid ? 'Bayar Sekarang' : 'Lacak Pesanan'}</Text>
         </AnimatedPressable>
 
         <AnimatedPressable style={styles.iconAction} onPress={onDetail} scaleDown={0.92}>
@@ -389,6 +404,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: colors.forest,
     ...shadows.forest,
+  },
+  unpaidPrimaryAction: {
+    backgroundColor: colors.warning,
   },
   primaryActionText: {
     flexShrink: 1,

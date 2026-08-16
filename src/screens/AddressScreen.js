@@ -10,27 +10,39 @@ import { colors, shadows } from '../theme/colors';
 
 export default function AddressScreen({ onBack, onContinue, mode = 'checkout' }) {
   const insets = useSafeAreaInsets();
-  const { addresses, addAddress, removeAddress, setNotice } = useAppState();
+  const { addresses, selectedAddress, selectAddress, addAddress, removeAddress, setNotice } = useAppState();
   const isManageMode = mode === 'manage';
-  const [selectedId, setSelectedId] = useState(addresses[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState(selectedAddress?.id ?? addresses[0]?.id ?? null);
   const [showForm, setShowForm] = useState(false);
-  const [draft, setDraft] = useState({ receiver: '', phone: '', detail: '' });
-  const selected = addresses.find((item) => item.id === selectedId);
+  const [draft, setDraft] = useState({ label: '', receiver: '', phone: '', detail: '' });
+  const selected = addresses.find((item) => item.id === selectedId) ?? selectedAddress ?? addresses[0];
 
   useEffect(() => {
-    if (!selectedId || !addresses.some((item) => item.id === selectedId)) {
-      setSelectedId(addresses[0]?.id ?? null);
+    if (selectedAddress?.id && addresses.some((item) => item.id === selectedAddress.id)) {
+      setSelectedId(selectedAddress.id);
+    } else if (addresses.length > 0) {
+      const fallbackId = addresses[0].id;
+      setSelectedId(fallbackId);
+      selectAddress(fallbackId);
     }
-  }, [addresses, selectedId]);
+  }, [addresses, selectedAddress, selectAddress]);
 
   const handleAddAddress = async () => {
-    if (Object.values(draft).some((value) => !value.trim())) {
+    if (!draft.receiver.trim() || !draft.phone.trim() || !draft.detail.trim()) {
       Alert.alert('Alamat belum lengkap', 'Isi nama penerima, nomor telepon, dan alamat lengkap.');
       return;
     }
-    const address = await addAddress(draft);
-    setSelectedId(address.id);
-    setDraft({ receiver: '', phone: '', detail: '' });
+    const finalDraft = {
+      ...draft,
+      label: draft.label.trim() || 'Rumah'
+    };
+    const address = await addAddress(finalDraft);
+    if (address?.id) {
+      setSelectedId(address.id);
+      selectAddress(address.id);
+      setNotice(`Alamat "${address.label}" berhasil ditambahkan`);
+    }
+    setDraft({ label: '', receiver: '', phone: '', detail: '' });
     setShowForm(false);
   };
 
@@ -45,11 +57,16 @@ export default function AddressScreen({ onBack, onContinue, mode = 'checkout' })
     );
   };
 
+  const handleSelectCard = (address) => {
+    setSelectedId(address.id);
+    selectAddress(address.id);
+  };
+
   return (
     <View style={styles.screen}>
       <FlowHeader
         title={isManageMode ? 'Kelola Alamat' : 'Alamat Pengiriman'}
-        subtitle={isManageMode ? 'Tambah atau hapus alamat tersimpan' : 'Pilih tujuan pengiriman pesanan'}
+        subtitle={isManageMode ? 'Tambah, pilih, atau hapus alamat tersimpan' : 'Pilih tujuan pengiriman pesanan'}
         onBack={onBack}
       />
       <ScrollView
@@ -60,12 +77,12 @@ export default function AddressScreen({ onBack, onContinue, mode = 'checkout' })
         {addresses.map((address) => {
           const active = selectedId === address.id;
           return (
-            <AnimatedPressable key={address.id} style={[styles.card, active && !isManageMode && styles.cardActive]} onPress={() => setSelectedId(address.id)}>
+            <AnimatedPressable key={address.id} style={[styles.card, active && styles.cardActive]} onPress={() => handleSelectCard(address)}>
               <View style={[styles.radio, active && styles.radioActive]}>{active && <View style={styles.dot} />}</View>
               <View style={styles.info}>
                 <View style={styles.labelRow}>
                   <Text style={styles.label}>{address.label}</Text>
-                  {active && !isManageMode && <Text style={styles.activeBadge}>DIPILIH</Text>}
+                  {active && <Text style={styles.activeBadge}>UTAMA / DIPILIH</Text>}
                 </View>
                 <Text style={styles.receiver}>{address.receiver}</Text>
                 <Text style={styles.detail}>{address.phone}{'\n'}{address.detail}</Text>
@@ -81,6 +98,7 @@ export default function AddressScreen({ onBack, onContinue, mode = 'checkout' })
         {showForm && (
           <View style={styles.form}>
             <Text style={styles.formTitle}>Tambah Alamat Baru</Text>
+            <TextInput value={draft.label} onChangeText={(label) => setDraft((current) => ({ ...current, label }))} placeholder="Label alamat (contoh: Rumah, Kantor, Apartemen)" placeholderTextColor={colors.warmGrayLight} style={styles.input} />
             <TextInput value={draft.receiver} onChangeText={(receiver) => setDraft((current) => ({ ...current, receiver }))} placeholder="Nama penerima" placeholderTextColor={colors.warmGrayLight} style={styles.input} />
             <TextInput value={draft.phone} onChangeText={(phone) => setDraft((current) => ({ ...current, phone }))} placeholder="Nomor telepon" placeholderTextColor={colors.warmGrayLight} keyboardType="phone-pad" style={styles.input} />
             <TextInput value={draft.detail} onChangeText={(detail) => setDraft((current) => ({ ...current, detail }))} placeholder="Alamat lengkap dan kode pos" placeholderTextColor={colors.warmGrayLight} multiline style={[styles.input, styles.addressInput]} />
@@ -92,18 +110,21 @@ export default function AddressScreen({ onBack, onContinue, mode = 'checkout' })
           <Text style={styles.addText}>{showForm ? 'Tutup Form Alamat' : 'Tambah Alamat Baru'}</Text>
         </AnimatedPressable>
         <AnimatedPressable
-          style={[styles.primary, !isManageMode && !selected && styles.disabled]}
-          disabled={!isManageMode && !selected}
+          style={[styles.primary, !selected && styles.disabled]}
+          disabled={!selected}
           onPress={() => {
+            if (selected) {
+              selectAddress(selected.id);
+            }
             if (isManageMode) {
-              setNotice(`${addresses.length} alamat tersimpan`);
+              setNotice(selected ? `Alamat pengiriman diubah ke "${selected.label}"` : `${addresses.length} alamat tersimpan`);
               onBack();
               return;
             }
             onContinue(selected);
           }}
         >
-          <Text style={styles.primaryText}>{isManageMode ? 'Selesai Kelola Alamat' : 'Pilih Metode Pembayaran'}</Text>
+          <Text style={styles.primaryText}>{isManageMode ? 'Gunakan Alamat Ini' : 'Pilih Metode Pembayaran'}</Text>
           <Feather name={isManageMode ? 'check' : 'arrow-right'} size={17} color={colors.white} />
         </AnimatedPressable>
       </ScrollView>

@@ -9,7 +9,7 @@ import { canRequestReturn, getOrderTimeline, orderStatusIndex, returnStatusMeta 
 import { useAppState } from '../state/AppContext';
 import { colors, shadows } from '../theme/colors';
 
-export default function OrderTrackingScreen({ orderId, onBack, onViewDetails, onChatTailor, onRequestReturn }) {
+export default function OrderTrackingScreen({ orderId, onBack, onViewDetails, onChatTailor, onRequestReturn, onPayOrder }) {
   const insets = useSafeAreaInsets();
   const { orders, updateOrderStatus, createMidtransPayment, backend } = useAppState();
   const [now, setNow] = useState(Date.now());
@@ -35,6 +35,10 @@ export default function OrderTrackingScreen({ orderId, onBack, onViewDetails, on
     new Date(order.paymentData.expiresAt).getTime() <= now;
   const continuePayment = async () => {
     if (openingPayment) return;
+    if (onPayOrder) {
+      onPayOrder(order);
+      return;
+    }
     setOpeningPayment(true);
     try {
       const payment = await createMidtransPayment(order.id);

@@ -9,9 +9,9 @@ export const colors = {
   indigoDye: '#143D60',    // Deep indigo dark navy
 
   // Core brand aliases mapped to palette
-  forest: '#A0C878',       // Main brand green — Pistachio
-  forestLight: '#DDEB9D',  // Light highlight — Mindaro
-  forestMid: '#27667B',    // Deep teal accent — Ming
+  forest: '#2C6842',       // Main brand green — Darker Green
+  forestLight: '#A0C878',  // Light highlight — Pistachio
+  forestMid: '#1C4A2E',    // Deep green accent
   forestDark: '#143D60',   // Deep dark background — Indigo Dye
 
   // Accent & Soft Tints
@@ -34,8 +34,8 @@ export const colors = {
   offWhite: '#FDFCF9',
 
   // Semantic
-  success: '#A0C878',
-  successLight: '#F4F8E5',
+  success: '#2C6842',
+  successLight: '#A0C878',
   warning: '#D99A3D',
   warningLight: '#FDF4E3',
   error: '#C94C4C',
@@ -87,7 +87,7 @@ export const shadows = {
   },
   // Colored shadow for primary CTA buttons
   forest: {
-    shadowColor: '#A0C878',
+    shadowColor: '#2C6842',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 16,

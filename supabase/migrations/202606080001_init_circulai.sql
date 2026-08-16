@@ -19,6 +19,8 @@ create table if not exists public.products (
   recommendations text[] not null default '{}',
   order_type text not null default 'catalog',
   sort_order integer not null default 0,
+  stock integer not null default 10,
+  initial_stock integer not null default 10,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

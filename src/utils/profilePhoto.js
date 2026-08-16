@@ -1,5 +1,6 @@
-import { File, Paths } from 'expo-file-system';
+import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import { Platform } from 'react-native';
 
 export async function pickProfilePhoto() {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -10,7 +11,7 @@ export async function pickProfilePhoto() {
   }
 
   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
     allowsEditing: true,
     aspect: [1, 1],
     quality: 0.82,
@@ -18,19 +19,37 @@ export async function pickProfilePhoto() {
 
   if (result.canceled || !result.assets?.[0]?.uri) return null;
 
-  const source = new File(result.assets[0].uri);
-  const extension = source.extension || '.jpg';
-  const destination = new File(Paths.document, `profile-photo-${Date.now()}${extension}`);
-  source.copy(destination);
-  return destination.uri;
+  const sourceUri = result.assets[0].uri;
+  
+  if (Platform.OS === 'web') {
+    return sourceUri;
+  }
+
+  let extension = 'jpg';
+  const parts = sourceUri.split('.');
+  if (parts.length > 1) {
+    extension = parts.pop();
+  }
+  
+  const destinationUri = `${FileSystem.documentDirectory}profile-photo-${Date.now()}.${extension}`;
+  
+  await FileSystem.copyAsync({
+    from: sourceUri,
+    to: destinationUri,
+  });
+  
+  return destinationUri;
 }
 
-export function deleteProfilePhoto(photoUri) {
-  if (!photoUri || !photoUri.startsWith(Paths.document.uri)) return;
+export async function deleteProfilePhoto(photoUri) {
+  if (Platform.OS === 'web') return;
+  if (!photoUri || !photoUri.startsWith(FileSystem.documentDirectory)) return;
 
   try {
-    const file = new File(photoUri);
-    if (file.exists) file.delete();
+    const info = await FileSystem.getInfoAsync(photoUri);
+    if (info.exists) {
+      await FileSystem.deleteAsync(photoUri);
+    }
   } catch {
     // Keep profile actions resilient if an old photo was already removed.
   }

@@ -166,6 +166,7 @@ export function AppProvider({ children }) {
   const [orders, setOrders] = useState(initialOrders.map(normalizeOrder));
   const [cart, setCart] = useState([]);
   const [addresses, setAddresses] = useState(savedAddresses);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [styleProfile, setStyleProfile] = useState(null);
   const [userProfile, setUserProfile] = useState(defaultUserProfile);
   const [measurements, setMeasurements] = useState(defaultMeasurements);
@@ -458,6 +459,16 @@ export function AppProvider({ children }) {
     runRemote(() => api.clearCart());
   }, [runRemote]);
 
+  const selectedAddress = useMemo(() => {
+    if (!addresses || addresses.length === 0) return null;
+    return addresses.find((item) => item.id === selectedAddressId) ?? addresses[0];
+  }, [addresses, selectedAddressId]);
+
+  const selectAddress = useCallback((addressId) => {
+    if (!addressId) return;
+    setSelectedAddressId(addressId);
+  }, []);
+
   const addAddress = useCallback(async (draft) => {
     const localAddress = {
       id: `ADDR-${Date.now()}`,
@@ -467,26 +478,36 @@ export function AppProvider({ children }) {
       detail: draft.detail.trim()
     };
 
+    let created = localAddress;
     if (backendOnlineRef.current) {
       try {
         const address = await api.addAddress(draft);
         setAddresses((current) => [...current, address]);
-        return address;
+        created = address;
       } catch {
         backendOnlineRef.current = false;
         setBackendStatus('offline');
+        setAddresses((current) => [...current, localAddress]);
       }
+    } else {
+      setAddresses((current) => [...current, localAddress]);
     }
 
-    setAddresses((current) => [...current, localAddress]);
-    return localAddress;
+    setSelectedAddressId(created.id);
+    return created;
   }, []);
 
   const removeAddress = useCallback((addressId) => {
-    setAddresses((current) => current.filter((address) => address.id !== addressId));
+    setAddresses((current) => {
+      const next = current.filter((address) => address.id !== addressId);
+      if (selectedAddressId === addressId) {
+        setSelectedAddressId(next[0]?.id ?? null);
+      }
+      return next;
+    });
     setNotice('Alamat dihapus');
     runRemote(() => api.removeAddress(addressId));
-  }, [runRemote]);
+  }, [runRemote, selectedAddressId]);
 
   const updatePreference = useCallback((section, key, value) => {
     if (!defaultPreferences[section] || !(key in defaultPreferences[section])) return;
@@ -805,6 +826,9 @@ export function AppProvider({ children }) {
       cart,
       cartSummary,
       addresses,
+      selectedAddressId,
+      selectedAddress,
+      selectAddress,
       styleProfile,
       userProfile,
       measurements,
@@ -878,6 +902,9 @@ export function AppProvider({ children }) {
       resetStyleProfile,
       saveMeasurements,
       saveStyleProfile,
+      selectAddress,
+      selectedAddress,
+      selectedAddressId,
       sendTailorMessage,
       sortOptions,
       styleProfile,

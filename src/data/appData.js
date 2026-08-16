@@ -51,7 +51,9 @@ export const products = [
     image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/6d2ec2e1f3f544a8b4d71c61e34a1467~.jpeg.webp',
     description: 'Wrap top serbaguna dengan tali pinggang yang membentuk siluet tanpa terasa ketat.',
     measurements: ['Lingkar dada', 'Panjang top', 'Lingkar lengan'],
-    recommendations: ['Office-to-dinner', 'Rectangle body', 'Warm earth palette']
+    recommendations: ['Office-to-dinner', 'Rectangle body', 'Warm earth palette'],
+    stock: 2,
+    initialStock: 10
   },
   {
     id: 2,
@@ -70,7 +72,9 @@ export const products = [
     image: 'https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/99/MTA-185118741/brd-74257_full01-473f6415.webp',
     description: 'Dress olive dengan potongan loose, cocok untuk daily wear dan acara semi formal.',
     measurements: ['Lingkar dada', 'Lingkar pinggang', 'Panjang dress'],
-    recommendations: ['Minimalist', 'Medium olive skin', 'Daily wear']
+    recommendations: ['Minimalist', 'Medium olive skin', 'Daily wear'],
+    stock: 5,
+    initialStock: 8
   },
   {
     id: 3,
@@ -89,7 +93,9 @@ export const products = [
     image: 'https://batiksolo.com/cdn/shop/files/UCH04391EDIT_427x.jpg?v=1733903172',
     description: 'Blouse earthy yang ringan dengan detail clean untuk dipadukan dengan celana high waist.',
     measurements: ['Lingkar dada', 'Lebar bahu', 'Panjang lengan'],
-    recommendations: ['Clean casual', 'Smart casual', 'Office']
+    recommendations: ['Clean casual', 'Smart casual', 'Office'],
+    stock: 1,
+    initialStock: 5
   },
   {
     id: 4,
@@ -108,7 +114,9 @@ export const products = [
     image: 'https://ethica-collection.com/wp-content/uploads/2023/12/MASAMI-04-KHAKI-WP-1-4.webp',
     description: 'Outer wrap dengan garis panjang untuk layering yang nyaman dan memanjangkan siluet.',
     measurements: ['Panjang outer', 'Lebar bahu', 'Lingkar lengan'],
-    recommendations: ['Traveling', 'Layering', 'Apple body']
+    recommendations: ['Traveling', 'Layering', 'Apple body'],
+    stock: 3,
+    initialStock: 12
   },
   {
     id: 5,
@@ -127,7 +135,9 @@ export const products = [
     image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/43427d1d8a6642af8db7bbc290ee71d3~.jpeg.webp',
     description: 'Midi dress terracotta dengan potongan flowy untuk special event yang tetap mindful.',
     measurements: ['Lingkar dada', 'Lingkar pinggang', 'Panjang midi'],
-    recommendations: ['Special event', 'Feminine soft', 'Medium warm skin']
+    recommendations: ['Special event', 'Feminine soft', 'Medium warm skin'],
+    stock: 7,
+    initialStock: 15
   },
   {
     id: 6,
@@ -146,7 +156,9 @@ export const products = [
     image: 'https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/16d546dcae0c4256abf37973bdb49277~tplv-aphluv4xwc-white-pad-v1:500:500.jpeg',
     description: 'Kemeja linen natural dengan detail minimal untuk capsule wardrobe.',
     measurements: ['Lingkar dada', 'Panjang kemeja', 'Lebar bahu'],
-    recommendations: ['Minimalist', 'Smart casual', 'Formal']
+    recommendations: ['Minimalist', 'Smart casual', 'Formal'],
+    stock: 4,
+    initialStock: 10
   }
 ];
 
@@ -1053,3 +1065,34 @@ export function getStyleAnalysis(answers) {
     products: productMap[bodyShape] ?? productMap.rectangle
   };
 }
+
+export const promoMemberItems = [
+  {
+    id: 201,
+    name: 'Tote Bag Kanvas Sisa',
+    discount: '50%',
+    price: 45000,
+    originalPrice: 90000,
+    image: 'https://images.unsplash.com/photo-1597484661643-2f5fef640dd1?auto=format&fit=crop&w=500&q=80',
+    productId: 1
+  },
+  {
+    id: 202,
+    name: 'Bandana Tenun Scraps',
+    discount: '30%',
+    price: 24500,
+    originalPrice: 35000,
+    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=500&q=80',
+    productId: 4
+  },
+  {
+    id: 203,
+    name: 'Pouch Kosmetik Upcycle',
+    discount: '40%',
+    price: 33000,
+    originalPrice: 55000,
+    image: 'https://images.unsplash.com/photo-1620860555353-8324e9334dd1?auto=format&fit=crop&w=500&q=80',
+    productId: 2
+  }
+];
+

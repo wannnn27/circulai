@@ -32,7 +32,7 @@ export default function ProfileAvatar({
       ]}
     >
       {photoUri ? (
-        <Image source={{ uri: photoUri }} style={{ width: size, height: size, borderRadius: radius }} />
+        <Image key={photoUri} source={{ uri: photoUri }} style={{ width: size, height: size, borderRadius: radius }} />
       ) : (
         <Text style={[styles.initials, { color: light ? colors.forest : colors.white, fontSize: size * 0.3 }]}>
           {getInitials(name)}

@@ -3,6 +3,7 @@ import {
   Animated,
   BackHandler,
   InteractionManager,
+  Linking,
   Pressable,
   StyleSheet,
   Text,
@@ -60,7 +61,7 @@ export default function MainApp() {
   const historyRef = useRef([]);
   const screenBackHandlerRef = useRef(null);
   const [mountedTabs, setMountedTabs] = useState(() => new Set(['home']));
-  const { notice, setNotice, authModalConfig, closeAuthModal } = useAppState();
+  const { notice, setNotice, authModalConfig, closeAuthModal, createMidtransPayment, selectedAddress, addresses } = useAppState();
   const active = route.name;
   const showTabs = MAIN_TABS.includes(active);
 
@@ -191,6 +192,26 @@ export default function MainApp() {
     navigate('exchange');
   }, [navigate]);
 
+  const handlePayOrder = useCallback(async (order) => {
+    if (!order) return;
+    try {
+      const payment = await createMidtransPayment(order.id);
+      if (payment?.redirectUrl) {
+        setNotice(`Membuka Midtrans untuk pesanan ${order.id}...`);
+        await Linking.openURL(payment.redirectUrl);
+        return;
+      }
+    } catch {
+      // ignore
+    }
+    const targetAddress = order.address ?? selectedAddress ?? addresses?.[0];
+    if (targetAddress) {
+      navigate('payment', { address: targetAddress, orderId: order.id });
+    } else {
+      navigate('order-tracking', { orderId: order.id });
+    }
+  }, [addresses, createMidtransPayment, navigate, selectedAddress, setNotice]);
+
   const chatFromOrder = useCallback((order) => {
     const tailorName = order.tailorProfiles?.[0]?.name ?? order.tailorProfile?.name ?? order.tailor;
     openTailorChat(tailorName, { order });
@@ -285,6 +306,7 @@ export default function MainApp() {
           }}
           onChatTailor={(tailorName, order) => openTailorChat(tailorName, { order })}
           onRequestReturn={openReturnRequest}
+          onPayOrder={handlePayOrder}
         />
       );
     }
@@ -320,7 +342,7 @@ export default function MainApp() {
       return <ExchangeScreen onBack={goBack} />;
     }
     return null;
-  }, [active, goBack, navigate, openProduct, openReturnRequest, openTailorChat, openExchange, registerScreenBackHandler, route.params]);
+  }, [active, goBack, handlePayOrder, navigate, openProduct, openReturnRequest, openTailorChat, openExchange, registerScreenBackHandler, route.params]);
 
   const tabParams = route.params ?? {};
 
@@ -381,6 +403,7 @@ export default function MainApp() {
               onTrackOrder={trackOrder}
               onChatTailor={chatFromOrder}
               onRequestReturn={openReturnRequest}
+              onPayOrder={handlePayOrder}
               focusedOrderId={active === 'orders' ? tabParams.focusedOrderId : undefined}
               onFocusedOrderHandled={handleFocusedOrder}
             />

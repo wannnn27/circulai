@@ -23,7 +23,7 @@ import SectionHeader from '../components/SectionHeader';
 import { useAppState } from '../state/AppContext';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
-import { formatCurrency } from '../data/appData';
+import { formatCurrency, promoMemberItems } from '../data/appData';
 
 const heroSlides = [
   {
@@ -69,32 +69,7 @@ const serviceIcons = [
   { id: 'flash', label: 'Flash Sale', icon: 'flash-outline', color: colors.error, route: 'explore', badge: 'Promo' },
 ];
 
-const promoMemberItems = [
-  {
-    id: 101,
-    name: 'Kids Storage Organizer',
-    discount: '50%',
-    price: 200000,
-    originalPrice: 400000,
-    image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/6d2ec2e1f3f544a8b4d71c61e34a1467~.jpeg.webp',
-  },
-  {
-    id: 102,
-    name: 'Linen Journal Notebook',
-    discount: '15%',
-    price: 67435,
-    originalPrice: 79000,
-    image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/43427d1d8a6642af8db7bbc290ee71d3~.jpeg.webp',
-  },
-  {
-    id: 103,
-    name: 'Eco Fabric Wash Gel',
-    discount: '35%',
-    price: 8600,
-    originalPrice: 13300,
-    image: 'https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/16d546dcae0c4256abf37973bdb49277~tplv-aphluv4xwc-white-pad-v1:500:500.jpeg',
-  },
-];
+
 
 export default function HomeScreen({ isActive = true, onNavigate, onProductPress, onTailorPress, onExchange }) {
   const { width: screenWidth } = useWindowDimensions();
@@ -102,6 +77,7 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
   const [heroIndex, setHeroIndex] = useState(0);
   const [copiedCode, setCopiedCode] = useState(false);
   const [scanModalVisible, setScanModalVisible] = useState(false);
+  const [flashSaleTime, setFlashSaleTime] = useState({ h: '00', m: '00', s: '00' });
 
   const {
     categories,
@@ -116,6 +92,7 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
     openAuthModal,
     requireAuth,
     addresses,
+    selectedAddress,
     setNotice,
   } = useAppState();
 
@@ -141,7 +118,24 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
       setHeroIndex(nextIndex);
     }, 4800);
 
-    return () => clearInterval(timer);
+    const flashTimer = setInterval(() => {
+      const now = new Date();
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+      const diff = endOfDay - now;
+
+      if (diff > 0) {
+        const h = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+        const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+        setFlashSaleTime({ h, m, s });
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(flashTimer);
+    };
   }, [heroIndex, heroWidth, isActive]);
 
   const handleHeroScrollEnd = (event) => {
@@ -156,8 +150,9 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
     setTimeout(() => setCopiedCode(false), 3000);
   };
 
-  const activeAddressLabel = addresses?.[0]?.detail
-    ? `${addresses[0].label} — ${addresses[0].detail}`
+  const activeAddress = selectedAddress ?? addresses?.[0];
+  const activeAddressLabel = activeAddress?.detail
+    ? `${activeAddress.label} — ${activeAddress.detail}`
     : 'Tambah alamat biar belanja lebih asyik';
 
   return (
@@ -423,7 +418,11 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
                 <Pressable
                   key={item.id}
                   style={styles.promoItemCard}
-                  onPress={() => onNavigate('explore')}
+                  onPress={() => {
+                    const product = products.find(p => p.id === item.productId);
+                    if (product) onProductPress(product);
+                    else onNavigate('explore');
+                  }}
                 >
                   <View style={styles.promoItemImgWrap}>
                     <ImageBackground
@@ -451,11 +450,11 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
             <View style={styles.flashSaleTitleRow}>
               <Text style={styles.flashSaleTitle}>FLASH SALE</Text>
               <View style={styles.timerPill}>
-                <Text style={styles.timerNum}>03</Text>
+                <Text style={styles.timerNum}>{flashSaleTime.h}</Text>
                 <Text style={styles.timerColon}>:</Text>
-                <Text style={styles.timerNum}>35</Text>
+                <Text style={styles.timerNum}>{flashSaleTime.m}</Text>
                 <Text style={styles.timerColon}>:</Text>
-                <Text style={styles.timerNum}>05</Text>
+                <Text style={styles.timerNum}>{flashSaleTime.s}</Text>
               </View>
             </View>
             <Pressable onPress={() => onNavigate('explore')}>
@@ -479,43 +478,48 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
               </View>
             </View>
 
-            {/* Flash Sale Product Cards */}
-            {products.slice(0, 4).map((p, idx) => (
-              <AnimatedPressable
-                key={p.id}
-                style={styles.flashProductCard}
-                onPress={() => onProductPress(p)}
-                scaleDown={0.97}
-              >
-                <ImageBackground
-                  source={{ uri: p.image }}
-                  style={styles.flashProductImg}
-                  imageStyle={{ borderTopLeftRadius: 14, borderTopRightRadius: 14 }}
+            {products.slice(0, 4).map((p, idx) => {
+              const stock = p.stock ?? 1;
+              const initialStock = p.initialStock ?? 10;
+              const stockPercent = Math.min(100, Math.max(0, (stock / initialStock) * 100));
+              
+              return (
+                <AnimatedPressable
+                  key={p.id}
+                  style={styles.flashProductCard}
+                  onPress={() => onProductPress(p)}
+                  scaleDown={0.97}
                 >
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountBadgeText}>▼ {20 + idx * 10}%</Text>
-                  </View>
-                </ImageBackground>
-
-                <View style={styles.flashProductBody}>
-                  <Text style={styles.flashProductTitle} numberOfLines={1}>{p.name}</Text>
-                  <Text style={styles.flashProductPrice}>{formatCurrency(p.price)}</Text>
-
-                  {/* Stock bar */}
-                  <View style={styles.stockMeterTrack}>
-                    <View style={[styles.stockMeterFill, { width: `${40 + idx * 20}%` }]} />
-                  </View>
-                  <Text style={styles.stockMeterText}>Sisa {idx + 1} 🔥</Text>
-
-                  <Pressable
-                    style={styles.buyNowBtn}
-                    onPress={() => requireAuth(() => onProductPress(p), 'Masuk untuk melakukan pemesanan.')}
+                  <ImageBackground
+                    source={{ uri: p.image }}
+                    style={styles.flashProductImg}
+                    imageStyle={{ borderTopLeftRadius: 14, borderTopRightRadius: 14 }}
                   >
-                    <Text style={styles.buyNowBtnText}>Beli sekarang</Text>
-                  </Pressable>
-                </View>
-              </AnimatedPressable>
-            ))}
+                    <View style={styles.discountBadge}>
+                      <Text style={styles.discountBadgeText}>▼ {20 + idx * 10}%</Text>
+                    </View>
+                  </ImageBackground>
+
+                  <View style={styles.flashProductBody}>
+                    <Text style={styles.flashProductTitle} numberOfLines={1}>{p.name}</Text>
+                    <Text style={styles.flashProductPrice}>{formatCurrency(p.price)}</Text>
+
+                    {/* Stock bar */}
+                    <View style={styles.stockMeterTrack}>
+                      <View style={[styles.stockMeterFill, { width: `${stockPercent}%` }]} />
+                    </View>
+                    <Text style={styles.stockMeterText}>Sisa {stock} 🔥</Text>
+
+                    <Pressable
+                      style={styles.buyNowBtn}
+                      onPress={() => requireAuth(() => onProductPress(p), 'Masuk untuk melakukan pemesanan.')}
+                    >
+                      <Text style={styles.buyNowBtnText}>Beli sekarang</Text>
+                    </Pressable>
+                  </View>
+                </AnimatedPressable>
+              );
+            })}
           </ScrollView>
         </View>
 

@@ -14,6 +14,7 @@ export default function OrdersScreen({
   onTrackOrder,
   onChatTailor,
   onRequestReturn,
+  onPayOrder,
   focusedOrderId,
   onFocusedOrderHandled
 }) {
@@ -104,6 +105,7 @@ export default function OrdersScreen({
               onPassport={() => setSelectedView({ order, tab: 'passport' })}
               onChat={() => onChatTailor(order)}
               onReturn={() => onRequestReturn(order.id)}
+              onPayOrder={onPayOrder ? () => onPayOrder(order) : () => onTrackOrder(order.id)}
             />
           ))
         )}
