@@ -11,9 +11,9 @@
     ],
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "icon": "./assets/images/logo app.png",
+    "icon": "./assets/images/logo_app.png",
     "splash": {
-      "image": "./assets/images/logo app.png",
+      "image": "./assets/images/logo_app.png",
       "resizeMode": "contain",
       "backgroundColor": "#FAFBF6"
     },
@@ -21,7 +21,7 @@
       "package": "com.circulai.app",
       "edgeToEdgeEnabled": false,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo app.png",
+        "foregroundImage": "./assets/images/logo_app.png",
         "backgroundColor": "#FAFBF6"
       }
     },

@@ -11,7 +11,7 @@ import {
 
 const { width, height } = Dimensions.get('window');
 
-const LOGO = require('../../assets/images/logo app.png');
+const LOGO = require('../../assets/images/logo_app.png');
 
 export default function SplashScreen({ onDone }) {
   // Logo
