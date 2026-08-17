@@ -12,20 +12,18 @@
     },
     "preview": {
       "distribution": "internal",
-      "autoIncrement": true,
       "channel": "preview",
       "environment": "preview",
-      "env": {
-        "DISABLE_AUTOMATIC_UPDATES": "true"
-      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
-      "autoIncrement": true,
       "channel": "production",
-      "environment": "production"
+      "environment": "production",
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {

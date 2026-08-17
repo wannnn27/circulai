@@ -11,9 +11,19 @@
     ],
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/images/logo app.png",
+    "splash": {
+      "image": "./assets/images/logo app.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAFBF6"
+    },
     "android": {
       "package": "com.circulai.app",
-      "edgeToEdgeEnabled": false
+      "edgeToEdgeEnabled": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo app.png",
+        "backgroundColor": "#FAFBF6"
+      }
     },
     "androidStatusBar": {
       "backgroundColor": "#FAF7F0",

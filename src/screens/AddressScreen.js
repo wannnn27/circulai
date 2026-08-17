@@ -7,6 +7,7 @@ import AnimatedPressable from '../components/AnimatedPressable';
 import FlowHeader from '../components/FlowHeader';
 import { useAppState } from '../state/AppContext';
 import { colors, shadows } from '../theme/colors';
+import { validateAddressDraft } from '../utils/validation';
 
 export default function AddressScreen({ onBack, onContinue, mode = 'checkout' }) {
   const insets = useSafeAreaInsets();
@@ -28,13 +29,24 @@ export default function AddressScreen({ onBack, onContinue, mode = 'checkout' })
   }, [addresses, selectedAddress, selectAddress]);
 
   const handleAddAddress = async () => {
-    if (!draft.receiver.trim() || !draft.phone.trim() || !draft.detail.trim()) {
-      Alert.alert('Alamat belum lengkap', 'Isi nama penerima, nomor telepon, dan alamat lengkap.');
+    const valResult = validateAddressDraft({
+      label: draft.label || 'Rumah',
+      name: draft.receiver,
+      phone: draft.phone,
+      detail: draft.detail,
+    });
+
+    if (!valResult.valid) {
+      const firstError = Object.values(valResult.errors)[0];
+      Alert.alert('Alamat Belum Lengkap', firstError);
       return;
     }
+
     const finalDraft = {
       ...draft,
-      label: draft.label.trim() || 'Rumah'
+      label: draft.label.trim() || 'Rumah',
+      receiver: draft.receiver.trim(),
+      detail: draft.detail.trim(),
     };
     const address = await addAddress(finalDraft);
     if (address?.id) {

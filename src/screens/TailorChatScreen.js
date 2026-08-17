@@ -1,5 +1,15 @@
+/**
+ * @file TailorChatScreen.js
+ * @description Real-time style chat between user and a local tailor.
+ *
+ * In demo / offline mode, outgoing messages trigger a simulated
+ * Gemini AI reply that represents the tailor's expertise.
+ * The typing indicator uses a staggered bounce animation.
+ */
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -73,6 +83,52 @@ export default function TailorChatScreen({ tailorName, product, order, onBack })
     typingTimer.current = setTimeout(() => setTyping(false), 760);
   };
 
+  // ── Typing indicator bounce animation ─────────────────────────────────────
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+  const typingAnim = useRef(null);
+
+  useEffect(() => {
+    if (typing) {
+      const makeBounce = (dotAnim, delay) =>
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.loop(
+            Animated.sequence([
+              Animated.spring(dotAnim, {
+                toValue: -6,
+                useNativeDriver: true,
+                speed: 28,
+                bounciness: 10,
+              }),
+              Animated.spring(dotAnim, {
+                toValue: 0,
+                useNativeDriver: true,
+                speed: 20,
+                bounciness: 4,
+              }),
+              Animated.delay(180),
+            ])
+          ),
+        ]);
+
+      typingAnim.current = Animated.parallel([
+        makeBounce(dot1, 0),
+        makeBounce(dot2, 130),
+        makeBounce(dot3, 260),
+      ]);
+      typingAnim.current.start();
+    } else {
+      typingAnim.current?.stop();
+      dot1.setValue(0);
+      dot2.setValue(0);
+      dot3.setValue(0);
+    }
+
+    return () => typingAnim.current?.stop();
+  }, [typing, dot1, dot2, dot3]);
+
   return (
     <KeyboardAvoidingView
       style={styles.screen}
@@ -141,9 +197,15 @@ export default function TailorChatScreen({ tailorName, product, order, onBack })
         ListFooterComponent={
           typing ? (
             <View style={styles.typingBubble}>
-              <View style={styles.typingDot} />
-              <View style={styles.typingDot} />
-              <View style={styles.typingDot} />
+              {[dot1, dot2, dot3].map((dotAnim, i) => (
+                <Animated.View
+                  key={i}
+                  style={[
+                    styles.typingDot,
+                    { transform: [{ translateY: dotAnim }] },
+                  ]}
+                />
+              ))}
             </View>
           ) : null
         }

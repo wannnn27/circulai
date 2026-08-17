@@ -1,3 +1,11 @@
+/**
+ * @file supabaseApi.js
+ * @description Supabase backend implementation for the CIRCULAI API contract.
+ *
+ * All public methods mirror those of `localApi` so the rest of the application
+ * can switch between backends purely through the DATA_BACKEND env variable.
+ */
+
 import {
   canRequestReturn,
   categories as fallbackCategories,
@@ -9,10 +17,14 @@ import {
   returnReasons,
   returnStatusMeta,
   savedAddresses,
-  sortOptions as fallbackSortOptions
+  sortOptions as fallbackSortOptions,
 } from '../data/appData';
 import { isSupabaseConfigured } from '../config/supabase';
 import { supabase } from './supabaseClient';
+// callGeminiStylist is imported lazily to avoid a circular-module edge case
+// (api.js imports supabaseApi; supabaseApi imports from api.js).
+// Using require() inside the function body sidesteps this cleanly.
+
 
 const defaultUserProfile = {
   id: 'USR-001',
@@ -653,16 +665,52 @@ export const supabaseApi = {
     };
   },
 
+  /**
+   * Returns a Gemini-generated personal style narrative for the given quiz
+   * answers and rule-based analysis result.
+   *
+   * Strategy (in priority order):
+   *   1. Direct Gemini API call via `EXPO_PUBLIC_GEMINI_API_KEY` — works
+   *      immediately as long as the key is configured, no Supabase Edge
+   *      Function setup required.
+   *   2. Supabase Edge Function `stylist-recommend` — used as an optional
+   *      server-side enhancement when the function is deployed (e.g. for
+   *      key rotation or server-side logging).
+   *   3. Graceful fallback: `{ narrative: null }` — the UI already handles
+   *      this case and simply hides the AI insight card.
+   *
+   * @param {object} answers        Quiz answers from the user.
+   * @param {object} ruleBasedResult Archetype / palette computed locally.
+   * @returns {Promise<{ narrative: string | null }>}
+   */
   async getAiStylistRecommendation(answers, ruleBasedResult) {
+    // ── 1. Try direct Gemini first (fastest, no server dependency) ──────────
+    try {
+      // Lazy require avoids a circular module dependency between api.js and
+      // supabaseApi.js (api.js imports supabaseApi, supabaseApi imports api).
+      const { callGeminiStylist } = require('./api');
+      const geminiResult = await callGeminiStylist(answers, ruleBasedResult);
+      if (geminiResult?.narrative) {
+        return geminiResult;
+      }
+    } catch {
+      // callGeminiStylist not available yet — fall through to Edge Function.
+    }
+
+    // ── 2. Try the Supabase Edge Function (server-side, optional) ───────────
     try {
       await ensureSession();
-      const { data, error } = await supabase.functions.invoke('stylist-recommend', {
-        body: { ...answers, ruleBasedResult }
-      });
-      if (error || data?.error) return { narrative: null };
-      return data?.data ?? data ?? { narrative: null };
+      const { data, error } = await supabase.functions.invoke(
+        'stylist-recommend',
+        { body: { ...answers, ruleBasedResult } },
+      );
+      if (!error && !data?.error) {
+        return data?.data ?? data ?? { narrative: null };
+      }
     } catch {
-      return { narrative: null };
+      // Edge Function not deployed or network error — fall through.
     }
+
+    return { narrative: null };
   }
 };

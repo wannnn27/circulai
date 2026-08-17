@@ -35,7 +35,7 @@ export const colors = {
 
   // Semantic
   success: '#2C6842',
-  successLight: '#A0C878',
+  successLight: '#E8F5E3',    // Light mint — proper background for green text
   warning: '#D99A3D',
   warningLight: '#FDF4E3',
   error: '#C94C4C',

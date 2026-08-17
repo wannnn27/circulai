@@ -1,3 +1,16 @@
+/**
+ * @file MainApp.js
+ * @description Root in-app navigator for CIRCULAI.
+ *
+ * Implements a custom tab + stack navigation system without react-navigation,
+ * keeping the bundle slim and navigation logic fully under our control.
+ *
+ * Tabs are lazily mounted and kept alive (hidden with `display: none`) so
+ * users return to their exact scroll position when switching tabs.
+ * Stack screens (product detail, cart, payment, etc.) render on top via
+ * absolute positioning and are unmounted when navigating away.
+ */
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -30,6 +43,7 @@ import TailorChatScreen from '../screens/TailorChatScreen';
 import ReturnRequestScreen from '../screens/ReturnRequestScreen';
 import ExchangeScreen from '../screens/ExchangeScreen';
 import AuthModal from '../components/AuthModal';
+import { TOAST_FADE_IN_MS, TOAST_FADE_OUT_MS, TOAST_VISIBLE_DURATION_MS, TAB_PRELOAD_INTERVAL_MS } from '../config/constants';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
 import { useAppState } from '../state/AppContext';
@@ -72,7 +86,6 @@ export default function MainApp() {
   useEffect(() => {
     if (!notice) return undefined;
 
-    // Slide up + fade in
     Animated.parallel([
       Animated.spring(toastTranslateY, {
         toValue: 0,
@@ -82,29 +95,28 @@ export default function MainApp() {
       }),
       Animated.timing(toastOpacity, {
         toValue: 1,
-        duration: 200,
+        duration: TOAST_FADE_IN_MS,
         useNativeDriver: true,
       }),
     ]).start();
 
     const timer = setTimeout(() => {
-      // Fade out
       Animated.parallel([
         Animated.timing(toastOpacity, {
           toValue: 0,
-          duration: 250,
+          duration: TOAST_FADE_OUT_MS,
           useNativeDriver: true,
         }),
         Animated.timing(toastTranslateY, {
           toValue: 10,
-          duration: 250,
+          duration: TOAST_FADE_OUT_MS,
           useNativeDriver: true,
         }),
       ]).start(() => {
         setNotice(null);
         toastTranslateY.setValue(20);
       });
-    }, 2400);
+    }, TOAST_VISIBLE_DURATION_MS);
 
     return () => clearTimeout(timer);
   }, [notice, setNotice, toastOpacity, toastTranslateY]);
@@ -129,7 +141,7 @@ export default function MainApp() {
         const nextTab = tabsToPreload.shift();
         if (!nextTab) return;
         ensureTabMounted(nextTab);
-        timer = setTimeout(mountNextTab, 120);
+        timer = setTimeout(mountNextTab, TAB_PRELOAD_INTERVAL_MS);
       };
 
       mountNextTab();
@@ -342,7 +354,7 @@ export default function MainApp() {
       return <ExchangeScreen onBack={goBack} />;
     }
     return null;
-  }, [active, goBack, handlePayOrder, navigate, openProduct, openReturnRequest, openTailorChat, openExchange, registerScreenBackHandler, route.params]);
+  }, [active, goBack, handlePayOrder, navigate, openReturnRequest, openTailorChat, registerScreenBackHandler, route.params]);
 
   const tabParams = route.params ?? {};
 

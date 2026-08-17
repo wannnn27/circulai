@@ -1,3 +1,13 @@
+/**
+ * @file AppContext.js
+ * @description Global application state provider for CIRCULAI.
+ *
+ * Uses React Context + a single provider component (`AppProvider`) to share
+ * state across the entire component tree. All mutations are exposed as
+ * stable callbacks (wrapped in `useCallback`) to prevent unnecessary
+ * re-renders in consuming components.
+ */
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -18,10 +28,20 @@ import {
   calcExchangePoints
 } from '../data/appData';
 import { api } from '../services/api';
+import { syncQueue } from '../services/syncQueue';
 import { deleteProfilePhoto } from '../utils/profilePhoto';
 
+import {
+  APP_STORAGE_KEY,
+  BACKEND_RETRY_INTERVAL_MS,
+  CART_DISCOUNT_AMOUNT,
+  CART_DISCOUNT_THRESHOLD,
+  CART_SHIPPING_FEE,
+  INITIAL_CIRCULAR_POINTS,
+  TAILOR_REPLY_DELAY_MS,
+} from '../config/constants';
+
 const AppContext = createContext(null);
-const STORAGE_KEY = '@circulai/app-state-v3';
 const defaultUserProfile = {
   id: 'USR-001',
   name: 'Adi Arwan Syah',
@@ -51,6 +71,14 @@ const defaultPreferences = {
   }
 };
 
+/**
+ * Rule-based fallback reply generator. Used when the Gemini API is
+ * unavailable or the API key is not configured.
+ *
+ * @param {string} text     The user's message.
+ * @param {object} context  Optional context ({ orderId, productName }).
+ * @returns {string} A contextually appropriate auto-reply.
+ */
 function createTailorReply(text, context = {}) {
   const message = text.toLowerCase();
   const subject = context.orderId
@@ -74,10 +102,66 @@ function createTailorReply(text, context = {}) {
   return `Terima kasih, catatanmu tentang ${subject} sudah saya terima. Saya akan menyesuaikannya dan mengabari kamu jika ada detail yang perlu dikonfirmasi.`;
 }
 
+/**
+ * Calls Gemini to generate a contextual tailor reply in character.
+ * Returns null if the key is missing or the request fails.
+ *
+ * @param {string} tailorName  The tailor's studio name.
+ * @param {string} userMessage The message sent by the user.
+ * @param {object} context     Optional context ({ orderId, productName }).
+ * @returns {Promise<string | null>}
+ */
+async function callGeminiTailorReply(tailorName, userMessage, context = {}) {
+  const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
+  if (!apiKey || apiKey === 'AIza_YOUR_KEY_HERE') return null;
+
+  const subject = context.orderId
+    ? `pesanan ${context.orderId} — ${context.productName ?? ''}`
+    : context.productName ?? 'produk custom CIRCULAI';
+
+  const prompt = [
+    `Kamu adalah ${tailorName}, seorang penjahit lokal profesional dari platform fashion berkelanjutan CIRCULAI Indonesia.`,
+    `Kamu sedang melayani chat dengan pelanggan yang bertanya tentang: ${subject}.`,
+    '',
+    `Pesan pelanggan: "${userMessage}"`,
+    '',
+    'Balas sebagai penjahit yang ramah, profesional, dan paham tentang:',
+    '- Teknik jahit dan pola kustom (made-to-order)',
+    '- Pilihan kain sisa premium (sustainable fashion)',
+    '- Proses pengerjaan dan estimasi waktu',
+    '- Penyesuaian ukuran tubuh',
+    '',
+    'Aturan:',
+    '- Gunakan Bahasa Indonesia yang hangat dan natural',
+    '- Maksimal 2-3 kalimat pendek — ini chat, bukan email',
+    '- Jangan terlalu formal, tapi tetap profesional',
+    '- Jika ada pertanyaan yang butuh konfirmasi, minta detail yang spesifik',
+  ].join('\n');
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.75, maxOutputTokens: 120 },
+        }),
+      },
+    );
+    if (!response.ok) return null;
+    const json = await response.json();
+    return json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function getLocalCartSummary(cart) {
   const subtotal = cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const shipping = cart.length > 0 ? 18000 : 0;
-  const discount = subtotal >= 400000 ? 20000 : 0;
+  const shipping = cart.length > 0 ? CART_SHIPPING_FEE : 0;
+  const discount = subtotal >= CART_DISCOUNT_THRESHOLD ? CART_DISCOUNT_AMOUNT : 0;
   return { subtotal, shipping, discount, total: subtotal + shipping - discount };
 }
 
@@ -178,7 +262,7 @@ export function AppProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authModalConfig, setAuthModalConfig] = useState({ visible: false, message: '', onSuccess: null });
   // ─── Circular Exchange ────────────────────────────────────────────────────
-  const [circularPoints, setCircularPoints] = useState(320);
+  const [circularPoints, setCircularPoints] = useState(INITIAL_CIRCULAR_POINTS);
   const [exchangeHistory, setExchangeHistory] = useState([]);
   const [userVouchers, setUserVouchers] = useState([]);
   const backendOnlineRef = useRef(false);
@@ -222,6 +306,7 @@ export function AppProvider({ children }) {
       applyBootstrap(data);
       backendOnlineRef.current = true;
       setBackendStatus('online');
+      syncQueue.flush(api).catch(() => {});
       if (!silent) setNotice('Data tersinkron dengan backend');
       return true;
     } catch {
@@ -233,7 +318,7 @@ export function AppProvider({ children }) {
   }, [applyBootstrap]);
 
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY)
+    AsyncStorage.getItem(APP_STORAGE_KEY)
       .then((stored) => {
         if (!stored) return;
         const parsed = JSON.parse(stored);
@@ -273,7 +358,7 @@ export function AppProvider({ children }) {
     if (!hydrated || backendStatus === 'online') return undefined;
     const timer = setInterval(() => {
       refreshBackend({ silent: true });
-    }, 10000);
+    }, BACKEND_RETRY_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [backendStatus, hydrated, refreshBackend]);
 
@@ -304,7 +389,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!hydrated) return;
     AsyncStorage.setItem(
-      STORAGE_KEY,
+      APP_STORAGE_KEY,
       JSON.stringify({
         products,
         tailors,
@@ -378,8 +463,13 @@ export function AppProvider({ children }) {
     return false;
   }, [isLoggedIn, openAuthModal]);
 
-  const runRemote = useCallback(async (operation, onSuccess) => {
-    if (!backendOnlineRef.current) return false;
+  const runRemote = useCallback(async (operation, onSuccess, actionMeta) => {
+    if (!backendOnlineRef.current) {
+      if (actionMeta) {
+        syncQueue.enqueue(actionMeta.action, actionMeta.payload).catch(() => {});
+      }
+      return false;
+    }
     try {
       const result = await operation();
       onSuccess?.(result);
@@ -387,6 +477,9 @@ export function AppProvider({ children }) {
     } catch {
       backendOnlineRef.current = false;
       setBackendStatus('offline');
+      if (actionMeta) {
+        syncQueue.enqueue(actionMeta.action, actionMeta.payload).catch(() => {});
+      }
       setNotice('Backend tidak merespons. Perubahan disimpan sementara di app.');
       return false;
     }
@@ -401,7 +494,8 @@ export function AppProvider({ children }) {
     );
     runRemote(
       () => api.toggleWishlist(productId, favorite),
-      (nextWishlist) => setWishlist(Array.isArray(nextWishlist) ? nextWishlist : [])
+      (nextWishlist) => setWishlist(Array.isArray(nextWishlist) ? nextWishlist : []),
+      { action: 'TOGGLE_WISHLIST', payload: { productId, favorite } }
     );
   }, [runRemote, wishlist]);
 
@@ -487,9 +581,11 @@ export function AppProvider({ children }) {
       } catch {
         backendOnlineRef.current = false;
         setBackendStatus('offline');
+        syncQueue.enqueue('ADD_ADDRESS', draft).catch(() => {});
         setAddresses((current) => [...current, localAddress]);
       }
     } else {
+      syncQueue.enqueue('ADD_ADDRESS', draft).catch(() => {});
       setAddresses((current) => [...current, localAddress]);
     }
 
@@ -506,7 +602,11 @@ export function AppProvider({ children }) {
       return next;
     });
     setNotice('Alamat dihapus');
-    runRemote(() => api.removeAddress(addressId));
+    runRemote(
+      () => api.removeAddress(addressId),
+      null,
+      { action: 'REMOVE_ADDRESS', payload: { id: addressId } }
+    );
   }, [runRemote, selectedAddressId]);
 
   const updatePreference = useCallback((section, key, value) => {
@@ -541,13 +641,18 @@ export function AppProvider({ children }) {
     setNotice('Ukuran tubuh berhasil disimpan');
     runRemote(
       () => api.saveMeasurements(merged),
-      (payload) => payload && setMeasurements({ ...defaultMeasurements, ...payload })
+      (payload) => payload && setMeasurements({ ...defaultMeasurements, ...payload }),
+      { action: 'SAVE_MEASUREMENTS', payload: merged }
     );
   }, [measurements, runRemote]);
 
   const saveStyleProfile = useCallback((profile) => {
     setStyleProfile(profile);
-    runRemote(() => api.saveStyleProfile(profile));
+    runRemote(
+      () => api.saveStyleProfile(profile),
+      null,
+      { action: 'SAVE_STYLE_PROFILE', payload: profile }
+    );
   }, [runRemote]);
 
   const resetStyleProfile = useCallback(() => {
@@ -579,6 +684,25 @@ export function AppProvider({ children }) {
     setNotice('Sesi akun telah direset');
   }, [applyBootstrap, userProfile.photoUri]);
 
+  /**
+   * Sends a user message in a tailor conversation.
+   *
+   * When the backend is online, delegates to the server which persists the
+   * message and handles the tailor reply.
+   *
+   * When offline / demo mode:
+   *   1. Appends the user message to local state immediately.
+   *   2. After a short delay, calls Gemini to generate an AI-powered tailor
+   *      reply based on the tailor's persona, the product/order context, and
+   *      the user's message.
+   *   3. Falls back to a rule-based `createTailorReply` if Gemini is
+   *      unavailable.
+   *
+   * @param {string} tailorName   Studio name (used as the conversation key).
+   * @param {string} text         The user's outgoing message.
+   * @param {object} context      Optional { orderId, productName }.
+   * @returns {boolean} false when params are invalid, true otherwise.
+   */
   const sendTailorMessage = useCallback((tailorName, text, context = {}) => {
     const cleanText = text.trim();
     if (!tailorName || !cleanText) return false;
@@ -612,19 +736,27 @@ export function AppProvider({ children }) {
       return true;
     }
 
-    setTimeout(() => {
+    // Offline / demo mode — generate an AI-powered reply via Gemini.
+    setTimeout(async () => {
+      // Try Gemini first, fall back to rule-based reply.
+      let replyText = await callGeminiTailorReply(tailorName, cleanText, context);
+      if (!replyText) {
+        replyText = createTailorReply(cleanText, context);
+      }
+
       const reply = {
         id: `MSG-${Date.now()}-TAILOR`,
         sender: 'tailor',
-        text: createTailorReply(cleanText, context),
+        text: replyText,
         createdAt: new Date().toISOString(),
         context
       };
+
       setConversations((current) => ({
         ...current,
         [tailorName]: [...(current[tailorName] ?? []), reply]
       }));
-    }, 700);
+    }, TAILOR_REPLY_DELAY_MS);
 
     return true;
   }, []);
@@ -925,10 +1057,19 @@ export function AppProvider({ children }) {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
+/**
+ * Hook that provides access to the global CIRCULAI app state and all
+ * mutation actions. Must be used inside a component wrapped by `AppProvider`.
+ *
+ * @returns {ReturnType<typeof useMemo>} The full application context value.
+ * @throws {Error} When called outside of an `AppProvider` tree.
+ */
 export function useAppState() {
   const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useAppState must be used inside AppProvider');
+    throw new Error(
+      '[CIRCULAI] useAppState() must be called inside an <AppProvider>.',
+    );
   }
   return context;
 }

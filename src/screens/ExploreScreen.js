@@ -1,8 +1,17 @@
+/**
+ * @file ExploreScreen.js
+ * @description Product catalogue screen with search, sort, and category filter.
+ *
+ * Search is debounced (250ms) so the expensive filter + sort computation only
+ * runs after the user pauses typing, not on every keystroke.
+ */
+
 import React, { useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import ProductCard from '../components/ProductCard';
+import { useDebounce } from '../hooks/useDebounce';
 import { useAppState } from '../state/AppContext';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
@@ -13,6 +22,10 @@ export default function ExploreScreen({ onProductPress, onNavigate, onBack, wish
   const [sort, setSort] = useState('Terbaru');
   const [filterOpen, setFilterOpen] = useState(false);
   const { categories, products, sortOptions, wishlist, cart, toggleWishlist } = useAppState();
+
+  // Debounce the raw search query so the filter memo only re-runs
+  // after 250ms of user idle time (not on every single keystroke).
+  const debouncedQuery = useDebounce(query, 250);
 
   // Filter panel slide animation
   const filterHeight = useRef(new Animated.Value(0)).current;
@@ -37,7 +50,7 @@ export default function ExploreScreen({ onProductPress, onNavigate, onBack, wish
   };
 
   const filteredProducts = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = debouncedQuery.trim().toLowerCase();
     return products
       .filter((p) => {
         const catMatch = category === 'Semua' || p.category === category;
@@ -51,7 +64,7 @@ export default function ExploreScreen({ onProductPress, onNavigate, onBack, wish
         if (sort === 'Rating') return b.rating - a.rating;
         return a.id - b.id;
       });
-  }, [category, products, query, sort, wishlist, wishlistOnly]);
+  }, [category, products, debouncedQuery, sort, wishlist, wishlistOnly]);
 
   return (
     <ScrollView
@@ -157,8 +170,8 @@ export default function ExploreScreen({ onProductPress, onNavigate, onBack, wish
         <View style={styles.resultBadge}>
           <Text style={styles.resultText}>{filteredProducts.length} produk</Text>
         </View>
-        {query !== '' && (
-          <Text style={styles.resultQuery}>untuk "{query}"</Text>
+        {debouncedQuery !== '' && (
+          <Text style={styles.resultQuery}>untuk "{debouncedQuery}"</Text>
         )}
       </View>
 

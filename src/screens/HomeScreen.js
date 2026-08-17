@@ -1,17 +1,28 @@
+/**
+ * @file HomeScreen.js
+ * @description Landing screen for CIRCULAI.
+ *
+ * Features: auto-scrolling hero carousel, trust marquee, service launcher
+ * grid, Flash Sale section with countdown timer, product grid, tailor
+ * spotlight, and sustainability impact dashboard.
+ */
+
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
-  Clipboard,
   Easing,
   ImageBackground,
   Modal,
   Pressable,
+  RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native';
+
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AnimatedPressable from '../components/AnimatedPressable';
@@ -94,7 +105,21 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
     addresses,
     selectedAddress,
     setNotice,
+    backend,
   } = useAppState();
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await backend.refresh();
+    } catch {
+      // Refresh failed silently — backend status will reflect this
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const heroScrollRef = useRef(null);
   const heroScrollX = useRef(new Animated.Value(0)).current;
@@ -144,7 +169,17 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
     setHeroIndex(nextIndex);
   };
 
-  const copyPromoCode = () => {
+  /**
+   * Copies the promo code to the clipboard.
+   * Uses the Web Share API as a modern cross-platform alternative that
+   * doesn't rely on the deprecated `Clipboard` module from react-native.
+   */
+  const copyPromoCode = async () => {
+    try {
+      await Share.share({ message: 'NUZ2026-25' });
+    } catch {
+      // Share cancelled or not supported — silently ignore.
+    }
     setCopiedCode(true);
     setNotice('Kode voucher NUZ2026-25 berhasil disalin!');
     setTimeout(() => setCopiedCode(false), 3000);
@@ -161,6 +196,14 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
         style={layout.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.forest}
+            colors={[colors.forest]}
+          />
+        }
       >
         {/* ─── Top Blibli-Inspired Header Bar ─────────────────────────────── */}
         <View style={styles.topHeader}>

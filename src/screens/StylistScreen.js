@@ -1,5 +1,24 @@
+/**
+ * @file StylistScreen.js
+ * @description CIRCULAI AI Stylist — 5-step quiz + results screen.
+ *
+ * Flow: quiz (steps 1-5) → analyzing animation → result card.
+ * The result card displays a rule-based style archetype computed locally,
+ * then enhances it with a Gemini-generated personal narrative fetched
+ * asynchronously via `api.getAiStylistRecommendation`.
+ */
+
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+// ─── Body shape illustration assets ─────────────────────────────────────────
+const BODY_IMAGES = {
+  rectangle: require('../../assets/images/bodyshape_rectangle.png'),
+  hourglass: require('../../assets/images/bodyshape_hourglass.png'),
+  pear:      require('../../assets/images/bodyshape_pear.png'),
+  apple:     require('../../assets/images/bodyshape_apple.png'),
+  inverted:  require('../../assets/images/bodyshape_inverted.png'),
+};
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import AnimatedPressable from '../components/AnimatedPressable';
@@ -14,6 +33,10 @@ import {
 } from '../data/appData';
 import { api } from '../services/api';
 import { useAppState } from '../state/AppContext';
+import {
+  STYLIST_ANALYSIS_DURATION_MS,
+  STYLIST_LOADING_STEP_INTERVAL_MS,
+} from '../config/constants';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
 
@@ -47,12 +70,12 @@ export default function StylistScreen({
     setLoadingIndex(0);
     const interval = setInterval(() => {
       setLoadingIndex((current) => Math.min(current + 1, loadingSteps.length - 1));
-    }, 420);
+    }, STYLIST_LOADING_STEP_INTERVAL_MS);
     const timeout = setTimeout(() => {
       const analysis = getStyleAnalysis(answers);
       saveStyleProfile(analysis);
       setStep('result');
-    }, 2200);
+    }, STYLIST_ANALYSIS_DURATION_MS);
 
     return () => {
       clearInterval(interval);
@@ -102,6 +125,7 @@ export default function StylistScreen({
     return (
       <ResultScreen
         result={result}
+        answers={answers}
         onBack={onBack}
         onRestart={restart}
         onNavigate={onNavigate}
@@ -193,7 +217,7 @@ export default function StylistScreen({
                   style={[
                     styles.bodyCard,
                     {
-                      backgroundColor: selected ? 'rgba(47,79,58,0.06)' : colors.white,
+                      backgroundColor: selected ? 'rgba(44,104,66,0.07)' : colors.white,
                       borderColor: selected ? colors.forest : colors.lightGray,
                     },
                     selected && shadows.sm
@@ -201,8 +225,13 @@ export default function StylistScreen({
                   onPress={() => setAnswers((current) => ({ ...current, bodyShape: shape.id }))}
                   scaleDown={0.97}
                 >
-                  <View style={[styles.bodyIcon, selected && styles.bodyIconActive]}>
-                    <Feather name={shape.icon} size={20} color={selected ? colors.white : colors.forest} />
+                  {/* Body shape illustration */}
+                  <View style={[styles.bodyImgWrap, selected && styles.bodyImgWrapActive]}>
+                    <Image
+                      source={BODY_IMAGES[shape.id]}
+                      style={styles.bodyImg}
+                      resizeMode="contain"
+                    />
                   </View>
                   <View style={layout.flex}>
                     <Text style={styles.optionTitle}>{shape.label}</Text>
@@ -395,7 +424,7 @@ function AnalyzingScreen({ loadingIndex }) {
   );
 }
 
-function ResultScreen({ result, onBack, onRestart, onNavigate, onProductPress, products, wishlist, toggleWishlist }) {
+function ResultScreen({ result, answers = {}, onBack, onRestart, onNavigate, onProductPress, products, wishlist, toggleWishlist }) {
   const recommended = products.slice(0, 2);
   const [aiNarrative, setAiNarrative] = useState(null);
   const [loadingAi, setLoadingAi] = useState(false);
@@ -404,7 +433,7 @@ function ResultScreen({ result, onBack, onRestart, onNavigate, onProductPress, p
     let active = true;
     if (api.getAiStylistRecommendation) {
       setLoadingAi(true);
-      api.getAiStylistRecommendation({}, result)
+      api.getAiStylistRecommendation(answers, result)
         .then((res) => {
           if (active && res?.narrative) {
             setAiNarrative(res.narrative);
@@ -679,7 +708,8 @@ const styles = StyleSheet.create({
   },
   bodyCard: {
     borderRadius: 20,
-    padding: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -687,16 +717,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.lightGray
   },
-  bodyIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
+  bodyImgWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.sandLight,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: colors.lightGray,
   },
-  bodyIconActive: {
-    backgroundColor: colors.forest,
+  bodyImgWrapActive: {
+    backgroundColor: 'rgba(44,104,66,0.10)',
+    borderColor: colors.forest,
+  },
+  bodyImg: {
+    width: 54,
+    height: 54,
   },
   heightCard: {
     minHeight: 54,

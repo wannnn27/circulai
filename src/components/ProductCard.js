@@ -1,4 +1,10 @@
-import React from 'react';
+/**
+ * @file ProductCard.js
+ * @description Product card component supporting grid and list layouts.
+ * Wrapped in React.memo for high-performance rendering in long lists.
+ */
+
+import React, { memo } from 'react';
 import { ImageBackground, StyleSheet, Text, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -12,7 +18,7 @@ function getEcoColor(score) {
   return { bg: colors.errorLight, text: colors.error };
 }
 
-export default function ProductCard({
+function ProductCard({
   product,
   grid = false,
   favorite = false,
@@ -374,3 +380,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
+
+export default memo(ProductCard);
+

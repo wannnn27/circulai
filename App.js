@@ -1,3 +1,11 @@
+/**
+ * @file App.js
+ * @description Application entry point for CIRCULAI.
+ *
+ * Manages the top-level phase state (splash → onboarding → main) and
+ * configures the Android navigation bar colour to match the app theme.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
@@ -5,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ErrorBoundary from './src/components/ErrorBoundary';
 import SplashScreen from './src/screens/SplashScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import MainApp from './src/navigation/MainApp';
@@ -16,7 +25,7 @@ const ONBOARDING_KEY = '@circulai/has_completed_onboarding';
 export default function App() {
   const [phase, setPhase] = useState('splash');
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
-  const backgroundColor = phase === 'splash' ? colors.forest : colors.ivory;
+  const backgroundColor = colors.ivory;
 
   useEffect(() => {
     AsyncStorage.getItem(ONBOARDING_KEY)
@@ -52,24 +61,26 @@ export default function App() {
   };
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView
-        style={[styles.root, { backgroundColor }]}
-        edges={phase === 'main' ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']}
-      >
-        <StatusBar
-          style={phase === 'splash' ? 'light' : 'dark'}
-          backgroundColor={backgroundColor}
-          translucent={false}
-        />
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <SafeAreaView
+          style={[styles.root, { backgroundColor }]}
+          edges={phase === 'main' ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']}
+        >
+          <StatusBar
+            style="dark"
+            backgroundColor={backgroundColor}
+            translucent={false}
+          />
 
-        <AppProvider>
-          {phase === 'splash' && <SplashScreen onDone={handleSplashDone} />}
-          {phase === 'onboarding' && <OnboardingScreen onDone={handleOnboardingDone} />}
-          {phase === 'main' && <MainApp />}
-        </AppProvider>
-      </SafeAreaView>
-    </SafeAreaProvider>
+          <AppProvider>
+            {phase === 'splash' && <SplashScreen onDone={handleSplashDone} />}
+            {phase === 'onboarding' && <OnboardingScreen onDone={handleOnboardingDone} />}
+            {phase === 'main' && <MainApp />}
+          </AppProvider>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -1,10 +1,25 @@
+/**
+ * @file BottomTabs.js
+ * @description Custom bottom navigation bar with spring pop animations
+ * and haptic feedback on tab switches.
+ */
+
 import React, { useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { tabs } from '../data/appData';
 import { colors, shadows } from '../theme/colors';
+
+/** Trigger light haptic impact if expo-haptics is installed. */
+function triggerHapticFeedback() {
+  try {
+    const Haptics = require('expo-haptics');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  } catch {
+    // expo-haptics not installed or not supported on platform — ignore safely
+  }
+}
 
 const TAB_ICONS_ALT = {
   home: { feather: 'home' },
@@ -24,9 +39,12 @@ export default function BottomTabs({ active, onChange }) {
   const handlePress = (tabId) => {
     if (tabId === active) return;
 
+    // Light tactile feedback when switching tabs.
+    triggerHapticFeedback();
+
     onChange(tabId);
 
-    // Pop animation on the pressed tab
+    // Pop animation on the pressed tab icon.
     Animated.sequence([
       Animated.spring(scales[tabId], {
         toValue: 0.88,
