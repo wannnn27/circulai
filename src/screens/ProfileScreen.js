@@ -43,6 +43,7 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
     wishlist,
     isLoggedIn,
     openAuthModal,
+    requireAuth,
     logout,
   } = useAppState();
 
@@ -229,7 +230,7 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
                     index < group.items.length - 1 && styles.menuItemBorder,
                     pressed && styles.menuItemPressed,
                   ]}
-                  onPress={() => handleMenuPress(item.label, onNavigate, setActivePanel, onExchange)}
+                  onPress={() => handleMenuPress(item.label, onNavigate, setActivePanel, onExchange, requireAuth)}
                 >
                   <View style={[styles.menuIcon, { backgroundColor: iconCfg.bg }]}>
                     <Feather name={item.icon} size={16} color={iconCfg.color} />
@@ -273,11 +274,23 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
   );
 }
 
-function handleMenuPress(label, onNavigate, setActivePanel, onExchange) {
+function handleMenuPress(label, onNavigate, setActivePanel, onExchange, requireAuth) {
   if (label === 'My Circular Style') { onNavigate('quiz'); return; }
-  if (label === 'Wishlist') { onNavigate('explore', { wishlistOnly: true }); return; }
-  if (label === 'Alamat') { onNavigate('profile-addresses'); return; }
-  if (label === 'Circular Exchange') { if (onExchange) { onExchange(); } else { onNavigate('exchange'); } return; }
+  if (label === 'Wishlist') {
+    requireAuth?.(() => onNavigate('explore', { wishlistOnly: true }), 'Masuk ke akun untuk melihat Wishlist tersimpan.');
+    return;
+  }
+  if (label === 'Alamat') {
+    requireAuth?.(() => onNavigate('profile-addresses'), 'Masuk ke akun untuk mengelola alamat pengiriman.');
+    return;
+  }
+  if (label === 'Circular Exchange') {
+    requireAuth?.(() => {
+      if (onExchange) onExchange();
+      else onNavigate('exchange');
+    }, 'Masuk ke akun untuk menukar atau mendonasikan pakaian.');
+    return;
+  }
 
   const panelByLabel = {
     'Ukuran Tersimpan': 'measurements',
@@ -287,7 +300,13 @@ function handleMenuPress(label, onNavigate, setActivePanel, onExchange) {
     Bantuan: 'help',
     'Kebijakan Privasi': 'privacy'
   };
-  setActivePanel(panelByLabel[label] ?? null);
+
+  const targetPanel = panelByLabel[label] ?? null;
+  if (['measurements', 'membership', 'notifications', 'security'].includes(targetPanel)) {
+    requireAuth?.(() => setActivePanel(targetPanel), `Masuk ke akun untuk mengelola ${label.toLowerCase()}.`);
+  } else {
+    setActivePanel(targetPanel);
+  }
 }
 
 const styles = StyleSheet.create({

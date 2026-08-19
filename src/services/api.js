@@ -242,6 +242,12 @@ export const localApi = {
       body: { orderId },
     }),
 
+  signIn: async ({ email, password }) => ({ email, name: email.split('@')[0] }),
+  signUp: async ({ name, email, password }) => ({ name, email }),
+  signOut: async () => true,
+
+  updateProductImage: async (productId, localUri) => localUri,
+
   /** Direct Gemini call — works without a backend server. */
   getAiStylistRecommendation: callGeminiStylist,
 };

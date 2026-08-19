@@ -1069,30 +1069,31 @@ export function getStyleAnalysis(answers) {
 export const promoMemberItems = [
   {
     id: 201,
-    name: 'Tote Bag Kanvas Sisa',
-    discount: '50%',
-    price: 45000,
-    originalPrice: 90000,
-    image: 'https://images.unsplash.com/photo-1597484661643-2f5fef640dd1?auto=format&fit=crop&w=500&q=80',
+    name: 'Luna Wrap Top',
+    discount: '25%',
+    price: 116250,
+    originalPrice: 155000,
+    image: 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/6d2ec2e1f3f544a8b4d71c61e34a1467~.jpeg.webp',
     productId: 1
   },
   {
     id: 202,
-    name: 'Bandana Tenun Scraps',
-    discount: '30%',
-    price: 24500,
-    originalPrice: 35000,
-    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=500&q=80',
-    productId: 4
+    name: 'Olive Linen Dress',
+    discount: '20%',
+    price: 140000,
+    originalPrice: 175000,
+    image: 'https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/99/MTA-185118741/brd-74257_full01-473f6415.webp',
+    productId: 2
   },
   {
     id: 203,
-    name: 'Pouch Kosmetik Upcycle',
-    discount: '40%',
-    price: 33000,
-    originalPrice: 55000,
-    image: 'https://images.unsplash.com/photo-1620860555353-8324e9334dd1?auto=format&fit=crop&w=500&q=80',
-    productId: 2
+    name: 'Earth Tone Blouse',
+    discount: '20%',
+    price: 96000,
+    originalPrice: 120000,
+    image: 'https://batiksolo.com/cdn/shop/files/UCH04391EDIT_427x.jpg?v=1733903172',
+    productId: 3
   }
 ];
+
 

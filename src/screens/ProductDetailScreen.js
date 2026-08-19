@@ -13,10 +13,14 @@ export default function ProductDetailScreen({ product, onBack, onCustomize, onCh
   const insets = useSafeAreaInsets();
   const [size, setSize] = useState('M');
   const [notes, setNotes] = useState('');
-  const { wishlist, toggleWishlist, styleProfile } = useAppState();
+  const { wishlist, toggleWishlist, styleProfile, requireAuth } = useAppState();
   const favorite = wishlist.includes(product.id);
 
   const handleOrder = () => onCustomize({ size, notes });
+
+  const handleChat = () => {
+    requireAuth(onChat, 'Masuk ke akun untuk berkonsultasi langsung dengan penjahit.');
+  };
 
   return (
     <View style={layout.flex}>
@@ -205,7 +209,7 @@ export default function ProductDetailScreen({ product, onBack, onCustomize, onCh
       <View style={[styles.ctaBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <AnimatedPressable
           style={styles.chatButton}
-          onPress={onChat}
+          onPress={handleChat}
           scaleDown={0.92}
         >
           <Feather name="message-circle" size={20} color={colors.forest} />

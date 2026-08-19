@@ -1,6 +1,14 @@
 drop policy if exists "Users manage own orders" on public.orders;
+drop policy if exists "Users read own orders" on public.orders;
+drop policy if exists "Users delete own orders" on public.orders;
+
 drop policy if exists "Users manage own return requests" on public.return_requests;
+drop policy if exists "Users read own return requests" on public.return_requests;
+
 drop policy if exists "Users manage own messages" on public.messages;
+drop policy if exists "Users read own messages" on public.messages;
+drop policy if exists "Users send own messages" on public.messages;
+drop policy if exists "Users delete own messages" on public.messages;
 
 create policy "Users read own orders"
   on public.orders for select

@@ -350,18 +350,20 @@ export const supabaseApi = {
 
   async bootstrap() {
     const user = await ensureSession();
+    const isAnonymous = Boolean(user.is_anonymous || !user.email);
     const [products, tailors, wishlist, cart, orders, conversations, userState] = await Promise.all([
       fetchProducts(),
       fetchTailors(),
-      fetchWishlist(user.id),
-      fetchCart(user.id),
-      fetchOrders(user.id),
-      fetchConversations(user.id),
+      isAnonymous ? [] : fetchWishlist(user.id),
+      isAnonymous ? [] : fetchCart(user.id),
+      isAnonymous ? [] : fetchOrders(user.id),
+      isAnonymous ? {} : fetchConversations(user.id),
       fetchUserState(user.id)
     ]);
 
     return {
       ...userState,
+      isLoggedIn: !isAnonymous,
       wishlist,
       products,
       tailors,
@@ -376,6 +378,47 @@ export const supabaseApi = {
       returnReasons,
       returnStatusMeta
     };
+  },
+
+  async signIn({ email, password }) {
+    assertSupabase();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password
+    });
+    throwIfError(error);
+    return data.user;
+  },
+
+  async signUp({ name, email, password }) {
+    assertSupabase();
+    const cleanEmail = email.trim();
+    const cleanName = (name || '').trim() || cleanEmail.split('@')[0];
+    const { data, error } = await supabase.auth.signUp({
+      email: cleanEmail,
+      password,
+      options: { data: { name: cleanName } }
+    });
+    throwIfError(error);
+    const user = data.user;
+    if (user) {
+      await supabase.from('profiles').upsert({
+        user_id: user.id,
+        app_user_code: `USR-${Date.now().toString(36).toUpperCase()}`,
+        name: cleanName,
+        email: cleanEmail,
+        phone: '0812 3456 7890'
+      }, { onConflict: 'user_id' });
+    }
+    return user;
+  },
+
+  async signOut() {
+    assertSupabase();
+    const { error } = await supabase.auth.signOut();
+    throwIfError(error);
+    await supabase.auth.signInAnonymously().catch(() => {});
+    return true;
   },
 
   async resetDemo() {
@@ -474,6 +517,35 @@ export const supabaseApi = {
     return { ok: true };
   },
 
+  async updateProductImage(productId, localUri) {
+    await ensureSession();
+    if (!localUri) throw new Error('URI gambar tidak valid');
+
+    const extension = localUri.split('?')[0].match(/\.([a-zA-Z0-9]+)$/)?.[1]?.toLowerCase() || 'jpg';
+    const filename = `product-${productId}-${Date.now()}.${extension}`;
+
+    const response = await fetch(localUri);
+    const file = await response.arrayBuffer();
+    const { error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(filename, file, {
+        contentType: `image/${extension === 'jpg' ? 'jpeg' : extension}`,
+        upsert: true
+      });
+    throwIfError(uploadError);
+
+    const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(filename);
+    const publicUrl = urlData.publicUrl;
+
+    const { error: updateError } = await supabase
+      .from('products')
+      .update({ image: publicUrl, image_storage_path: filename })
+      .eq('id', String(productId));
+    throwIfError(updateError);
+
+    return publicUrl;
+  },
+
   async updateProfile(profile) {
     const user = await ensureSession();
     const uploadedPhotoUri = await uploadLocalFile('avatars', user.id, profile.photoUri);
@@ -547,21 +619,48 @@ export const supabaseApi = {
     return fetchWishlist(user.id);
   },
 
-  async placeOrder({ address, paymentMethod }) {
+  async placeOrder({ address, paymentMethod, cart: inputCart, total: inputTotal }) {
     const user = await ensureSession();
-    const cart = await fetchCart(user.id);
-    if (!cart.length) return null;
-    const order = createOrderFromCart(cart, Date.now(), {
+    let cart = await fetchCart(user.id);
+    if (!cart.length && inputCart?.length) {
+      // Sync local cart items to Supabase cart_items table
+      for (const item of inputCart) {
+        const prod = item.product ?? {};
+        await supabase.from('cart_items').insert({
+          user_id: user.id,
+          product_id: String(item.productId ?? prod.id ?? '1'),
+          product_snapshot: prod,
+          customization: item.customization ?? {},
+          quantity: item.quantity ?? 1,
+          unit_price: item.unitPrice ?? prod.price ?? 0
+        });
+      }
+      cart = await fetchCart(user.id);
+    }
+    if (!cart.length && !inputCart?.length) return null;
+    const activeCart = cart.length ? cart : inputCart;
+    const calculatedTotal = inputTotal ?? getLocalCartSummary(activeCart).total;
+    const order = createOrderFromCart(activeCart, Date.now(), {
       address,
       paymentMethod,
-      total: getLocalCartSummary(cart).total
+      total: calculatedTotal
     });
     const { error } = await supabase.rpc('place_order', {
       p_order_id: order.id,
       p_status: order.status,
       p_payload: order
     });
-    throwIfError(error);
+    if (error) {
+      // Fallback: direct insert if RPC encounters constraint
+      const { error: insertError } = await supabase.from('orders').insert({
+        id: order.id,
+        user_id: user.id,
+        status: order.status,
+        payload: order
+      });
+      if (insertError) throw insertError;
+      await supabase.from('cart_items').delete().eq('user_id', user.id);
+    }
     return order;
   },
 
@@ -618,8 +717,17 @@ export const supabaseApi = {
     return getTailorMessages(user.id, tailorName);
   },
 
-  async createMidtransSnap(orderId) {
-    await ensureSession();
+  async createMidtransSnap(orderId, orderPayload = null) {
+    const user = await ensureSession();
+    if (orderPayload) {
+      // Ensure order exists in cloud database so Edge Function can process it
+      await supabase.from('orders').upsert({
+        id: orderId,
+        user_id: user.id,
+        status: orderPayload.status ?? 'WAITING_PAYMENT',
+        payload: orderPayload
+      }, { onConflict: 'id' });
+    }
     const { data, error } = await supabase.functions.invoke('create-midtrans-snap', {
       body: { orderId }
     });

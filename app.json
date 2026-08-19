@@ -25,6 +25,14 @@
         "backgroundColor": "#FAFBF6"
       }
     },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.circulai.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Izinkan CIRCULAI mengakses kamera untuk memindai QR tag Digital Product Passport pakaian.",
+        "NSPhotoLibraryUsageDescription": "Izinkan CIRCULAI mengakses galeri untuk memilih foto profil atau referensi desain."
+      }
+    },
     "androidStatusBar": {
       "backgroundColor": "#FAF7F0",
       "barStyle": "dark-content",
@@ -55,10 +63,18 @@
     "plugins": [
       "expo-font",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Izinkan CIRCULAI mengakses kamera untuk memindai QR tag Digital Product Passport pakaian.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-image-picker",
         {
-          "photosPermission": "Izinkan CIRCULAI mengakses galeri untuk memilih foto profil.",
-          "cameraPermission": false,
+          "photosPermission": "Izinkan CIRCULAI mengakses galeri untuk memilih foto profil atau referensi desain.",
+          "cameraPermission": "Izinkan CIRCULAI mengakses kamera untuk mengambil foto referensi desain ke penjahit.",
           "microphonePermission": false
         }
       ],

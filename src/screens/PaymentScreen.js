@@ -47,7 +47,7 @@ export default function PaymentScreen({ address, onBack, onComplete }) {
       }
       if (selectedMethod.id === 'MIDTRANS_SNAP') {
         try {
-          const payment = await createMidtransPayment(order.id);
+          const payment = await createMidtransPayment(order.id, order);
           if (payment?.redirectUrl) await Linking.openURL(payment.redirectUrl);
         } catch (error) {
           Alert.alert(

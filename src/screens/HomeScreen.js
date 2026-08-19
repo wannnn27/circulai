@@ -7,7 +7,7 @@
  * spotlight, and sustainability impact dashboard.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -29,45 +29,14 @@ import AnimatedPressable from '../components/AnimatedPressable';
 import IconButton from '../components/IconButton';
 import LeafMark from '../components/LeafMark';
 import MetricCard from '../components/MetricCard';
+import PassportModal from '../components/PassportModal';
+import PassportScannerModal from '../components/PassportScannerModal';
 import ProductCard from '../components/ProductCard';
 import SectionHeader from '../components/SectionHeader';
 import { useAppState } from '../state/AppContext';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
-import { formatCurrency, promoMemberItems } from '../data/appData';
-
-const heroSlides = [
-  {
-    id: 'circular-sale',
-    badge: 'Circular Fashion Day',
-    badgeIcon: 'recycle',
-    title: 'Diskon s.d. 60%\n+ Extra Poin Daur Ulang',
-    copy: 'Kain sisa atelier pilihan dengan potongan harga terbesar bulan ini.',
-    button: 'Jelajahi Promo',
-    route: 'explore',
-    image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 'bespoke-studio',
-    badge: 'Made After You Order',
-    badgeIcon: 'hanger',
-    title: 'Made For You,\nNot For Landfill',
-    copy: 'Desain kustom baju buatan penjahit lokal sesuai ukuran tubuhmu.',
-    button: 'Coba Bespoke Studio',
-    route: 'custom-design',
-    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=1000&q=80',
-  },
-  {
-    id: 'ai-stylist',
-    badge: 'Smart Match AI',
-    badgeIcon: 'lightning-bolt',
-    title: 'Find Your\nPersonal Palette',
-    copy: 'Rekomendasi outfit cocok dengan warna kulit & bentuk tubuhmu.',
-    button: 'Coba AI Stylist',
-    route: 'quiz',
-    image: 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=1000&q=80',
-  },
-];
+import { formatCurrency } from '../data/appData';
 
 const serviceIcons = [
   { id: 'bespoke', label: 'Bespoke', icon: 'scissors-cutting', color: colors.forest, route: 'custom-design', badge: 'Kustom' },
@@ -80,14 +49,13 @@ const serviceIcons = [
   { id: 'flash', label: 'Flash Sale', icon: 'flash-outline', color: colors.error, route: 'explore', badge: 'Promo' },
 ];
 
-
-
 export default function HomeScreen({ isActive = true, onNavigate, onProductPress, onTailorPress, onExchange }) {
   const { width: screenWidth } = useWindowDimensions();
   const [category, setCategory] = useState('Semua');
   const [heroIndex, setHeroIndex] = useState(0);
   const [copiedCode, setCopiedCode] = useState(false);
   const [scanModalVisible, setScanModalVisible] = useState(false);
+  const [scannedPassportOrder, setScannedPassportOrder] = useState(null);
   const [flashSaleTime, setFlashSaleTime] = useState({ h: '00', m: '00', s: '00' });
 
   const {
@@ -107,6 +75,65 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
     setNotice,
     backend,
   } = useAppState();
+
+  const heroSlides = useMemo(() => {
+    const prodImg1 = products[0]?.image || 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/6d2ec2e1f3f544a8b4d71c61e34a1467~.jpeg.webp';
+    const prodImg2 = products[4]?.image || products[1]?.image || 'https://images.tokopedia.net/img/cache/700/aphluv/1997/1/1/43427d1d8a6642af8db7bbc290ee71d3~.jpeg.webp';
+    const prodImg3 = products[1]?.image || products[2]?.image || 'https://www.static-src.com/wcsstore/Indraprastha/images/catalog/full/catalog-image/99/MTA-185118741/brd-74257_full01-473f6415.webp';
+
+    return [
+      {
+        id: 'circular-sale',
+        badge: 'Circular Fashion Day',
+        badgeIcon: 'recycle',
+        title: 'Diskon s.d. 60%\n+ Extra Poin Daur Ulang',
+        copy: 'Kain sisa atelier pilihan dengan potongan harga terbesar bulan ini.',
+        button: 'Jelajahi Promo',
+        route: 'explore',
+        image: prodImg1,
+      },
+      {
+        id: 'bespoke-studio',
+        badge: 'Made After You Order',
+        badgeIcon: 'hanger',
+        title: 'Made For You,\nNot For Landfill',
+        copy: 'Desain kustom baju buatan penjahit lokal sesuai ukuran tubuhmu.',
+        button: 'Coba Bespoke Studio',
+        route: 'custom-design',
+        image: prodImg2,
+      },
+      {
+        id: 'ai-stylist',
+        badge: 'Smart Match AI',
+        badgeIcon: 'lightning-bolt',
+        title: 'Find Your\nPersonal Palette',
+        copy: 'Rekomendasi outfit cocok dengan warna kulit & bentuk tubuhmu.',
+        button: 'Coba AI Stylist',
+        route: 'quiz',
+        image: prodImg3,
+      },
+    ];
+  }, [products]);
+
+  const memberPromoItems = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    return products.slice(0, 3).map((product, idx) => {
+      const discounts = ['25%', '20%', '20%'];
+      const discountMultipliers = [0.75, 0.8, 0.8];
+      const discount = discounts[idx % discounts.length];
+      const discountPrice = Math.round(product.price * discountMultipliers[idx % discountMultipliers.length]);
+      return {
+        id: `promo-${product.id}`,
+        productId: product.id,
+        product,
+        name: product.name,
+        discount,
+        price: discountPrice,
+        originalPrice: product.price,
+        image: product.image,
+      };
+    });
+  }, [products]);
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -135,7 +162,7 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
 
     const timer = setInterval(() => {
       if (heroIsDragging.current) return;
-      const nextIndex = (heroIndex + 1) % heroSlides.length;
+      const nextIndex = (heroIndex + 1) % (heroSlides.length || 1);
       heroScrollRef.current?.scrollTo({
         x: nextIndex * heroWidth,
         animated: true,
@@ -161,7 +188,7 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
       clearInterval(timer);
       clearInterval(flashTimer);
     };
-  }, [heroIndex, heroWidth, isActive]);
+  }, [heroIndex, heroSlides.length, heroWidth, isActive]);
 
   const handleHeroScrollEnd = (event) => {
     const nextIndex = Math.round(event.nativeEvent.contentOffset.x / heroWidth);
@@ -457,12 +484,12 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.promoItemsScroll}
             >
-              {promoMemberItems.map((item) => (
+              {memberPromoItems.map((item) => (
                 <Pressable
                   key={item.id}
                   style={styles.promoItemCard}
                   onPress={() => {
-                    const product = products.find(p => p.id === item.productId);
+                    const product = item.product || products.find((p) => p.id === item.productId);
                     if (product) onProductPress(product);
                     else onNavigate('explore');
                   }}
@@ -679,42 +706,25 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
         </View>
       </ScrollView>
 
-      {/* ─── Digital Product Passport Scanner Modal ────────────────────── */}
-      <Modal
+      {/* ─── Digital Product Passport Scanner Camera Modal ────────────── */}
+      <PassportScannerModal
         visible={scanModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setScanModalVisible(false)}
-      >
-        <View style={styles.scanModalOverlay}>
-          <View style={styles.scanModalContent}>
-            <View style={styles.scanHeader}>
-              <LeafMark size={20} color={colors.forest} />
-              <Text style={styles.scanTitle}>Digital Product Passport</Text>
-              <Pressable onPress={() => setScanModalVisible(false)}>
-                <Feather name="x" size={20} color={colors.warmGray} />
-              </Pressable>
-            </View>
+        onClose={() => setScanModalVisible(false)}
+        orders={orders}
+        products={products}
+        onScannedPassport={(order) => {
+          setScannedPassportOrder(order);
+        }}
+      />
 
-            <View style={styles.qrPlaceholderBox}>
-              <MaterialCommunityIcons name="qrcode-scan" size={80} color={colors.forest} />
-              <Text style={styles.qrText}>Arahkan kamera ke QR Code Tag Pakaian CIRCULAI</Text>
-            </View>
-
-            <Text style={styles.qrDesc}>
-              Digital Passport memverifikasi asal-usul kain sisa, profil penjahit lokal yang memproduksi, serta jejak penghematan karbon pakaianmu.
-            </Text>
-
-            <AnimatedPressable
-              style={styles.closeScanBtn}
-              onPress={() => setScanModalVisible(false)}
-              scaleDown={0.97}
-            >
-              <Text style={styles.closeScanBtnText}>Tutup Scanner</Text>
-            </AnimatedPressable>
-          </View>
-        </View>
-      </Modal>
+      {/* ─── Scanned Passport Full Info Sheet ─────────────────────────── */}
+      {!!scannedPassportOrder && (
+        <PassportModal
+          order={scannedPassportOrder}
+          initialTab="passport"
+          onClose={() => setScannedPassportOrder(null)}
+        />
+      )}
     </View>
   );
 }

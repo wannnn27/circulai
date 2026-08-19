@@ -40,6 +40,7 @@ import {
   INITIAL_CIRCULAR_POINTS,
   TAILOR_REPLY_DELAY_MS,
 } from '../config/constants';
+import { isSupabaseConfigured } from '../config/supabase';
 
 const AppContext = createContext(null);
 const defaultUserProfile = {
@@ -77,27 +78,40 @@ const defaultPreferences = {
  *
  * @param {string} text     The user's message.
  * @param {object} context  Optional context ({ orderId, productName }).
+ * @param {string} image    Optional attached image URI.
  * @returns {string} A contextually appropriate auto-reply.
  */
-function createTailorReply(text, context = {}) {
-  const message = text.toLowerCase();
+function createTailorReply(text, context = {}, image = null) {
+  const message = (text ?? '').toLowerCase();
   const subject = context.orderId
     ? `pesanan ${context.orderId}`
     : context.productName
       ? context.productName
       : 'outfit pilihanmu';
 
+  if (image || message.includes('foto') || message.includes('sketsa') || message.includes('gambar') || message.includes('desain')) {
+    return `Foto referensinya sudah kami terima dengan jelas! Model dan siluet ini sangat bagus. Kami bisa buatkan pola potong khusus dan jahit sesuai bentuk tubuhmu.`;
+  }
+  if (message.includes('rekomendasi ukuran') || message.includes('tanya ukuran') || message.includes('panduan ukuran')) {
+    return `Untuk ${subject}, silakan kirimkan lingkar dada, lingkar pinggang, dan panjang baju yang diinginkan agar kami buatkan fit yang paling nyaman.`;
+  }
+  if (message.includes('ketersediaan kain') || message.includes('pilihan kain') || message.includes('kain sisa') || message.includes('bahan')) {
+    return `Saat ini tersedia deadstock kain linen premium, katun poplin atelier, dan rayon motif earth tone. Semua kain sudah kami kurasi dan siap digunakan.`;
+  }
+  if (message.includes('estimasi') || message.includes('lama pengerjaan') || message.includes('kapan jadi')) {
+    return `Proses jahit made-to-order biasanya memerlukan 4-7 hari kerja termasuk pemotongan pola dan quality check sebelum dikirim.`;
+  }
+  if (message.includes('fitting') || message.includes('jadwal') || message.includes('ukur')) {
+    return `Bisa banget! Kamu bisa fitting langsung di studio kami atau konsultasi pengukuran via video call/chat dengan penjahit.`;
+  }
   if (message.includes('ukuran') || message.includes('size') || message.includes('fit')) {
     return `Bisa, ukuran ${subject} dapat kami sesuaikan. Kirim ukuran utama atau catatan fit yang kamu inginkan ya.`;
-  }
-  if (message.includes('kain') || message.includes('bahan') || message.includes('warna')) {
-    return `Tentu. Untuk ${subject}, saya akan cek pilihan kain dan warna yang masih tersedia lalu mengabari kamu di sini.`;
   }
   if (message.includes('status') || message.includes('proses') || message.includes('pesanan')) {
     return `Saya cek progres ${subject} dulu ya. Update produksi berikutnya akan saya kirim lewat chat ini.`;
   }
   if (message.includes('halo') || message.includes('hai') || message.includes('hi')) {
-    return `Halo juga. Senang bisa membantu kamu terkait ${subject}. Ada detail yang ingin didiskusikan?`;
+    return `Halo juga! Senang bisa membantu kamu terkait ${subject}. Ada detail desain atau ukuran yang ingin didiskusikan?`;
   }
   return `Terima kasih, catatanmu tentang ${subject} sudah saya terima. Saya akan menyesuaikannya dan mengabari kamu jika ada detail yang perlu dikonfirmasi.`;
 }
@@ -109,9 +123,10 @@ function createTailorReply(text, context = {}) {
  * @param {string} tailorName  The tailor's studio name.
  * @param {string} userMessage The message sent by the user.
  * @param {object} context     Optional context ({ orderId, productName }).
+ * @param {string} image       Optional attached image.
  * @returns {Promise<string | null>}
  */
-async function callGeminiTailorReply(tailorName, userMessage, context = {}) {
+async function callGeminiTailorReply(tailorName, userMessage, context = {}, image = null) {
   const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
   if (!apiKey || apiKey === 'AIza_YOUR_KEY_HERE') return null;
 
@@ -122,20 +137,20 @@ async function callGeminiTailorReply(tailorName, userMessage, context = {}) {
   const prompt = [
     `Kamu adalah ${tailorName}, seorang penjahit lokal profesional dari platform fashion berkelanjutan CIRCULAI Indonesia.`,
     `Kamu sedang melayani chat dengan pelanggan yang bertanya tentang: ${subject}.`,
+    image ? 'Pelanggan juga melampirkan sebuah FOTO REFERENSI / SKETSA model busana.' : '',
     '',
     `Pesan pelanggan: "${userMessage}"`,
     '',
-    'Balas sebagai penjahit yang ramah, profesional, dan paham tentang:',
+    'Balas sebagai penjahit yang ramah, antusias, profesional, dan paham tentang:',
     '- Teknik jahit dan pola kustom (made-to-order)',
-    '- Pilihan kain sisa premium (sustainable fashion)',
-    '- Proses pengerjaan dan estimasi waktu',
-    '- Penyesuaian ukuran tubuh',
+    '- Pilihan kain sisa premium (sustainable fashion upcycling)',
+    '- Proses pengerjaan, estimasi waktu, dan jadwal fitting',
+    '- Penyesuaian ukuran tubuh yang tepat',
     '',
     'Aturan:',
-    '- Gunakan Bahasa Indonesia yang hangat dan natural',
-    '- Maksimal 2-3 kalimat pendek — ini chat, bukan email',
-    '- Jangan terlalu formal, tapi tetap profesional',
-    '- Jika ada pertanyaan yang butuh konfirmasi, minta detail yang spesifik',
+    '- Gunakan Bahasa Indonesia yang hangat, bersahabat, dan profesional',
+    '- Maksimal 2-3 kalimat pendek — ini chat instan, bukan email',
+    '- Jangan terlalu kaku, berikan apresiasi jika pengguna melampirkan referensi',
   ].join('\n');
 
   try {
@@ -246,10 +261,10 @@ export function AppProvider({ children }) {
   const [categories, setCategories] = useState(fallbackCategories);
   const [sortOptions, setSortOptions] = useState(fallbackSortOptions);
   const [paymentMethods, setPaymentMethods] = useState(fallbackPaymentMethods);
-  const [wishlist, setWishlist] = useState([1, 5]);
-  const [orders, setOrders] = useState(initialOrders.map(normalizeOrder));
+  const [wishlist, setWishlist] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [cart, setCart] = useState([]);
-  const [addresses, setAddresses] = useState(savedAddresses);
+  const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [styleProfile, setStyleProfile] = useState(null);
   const [userProfile, setUserProfile] = useState(defaultUserProfile);
@@ -276,9 +291,9 @@ export function AppProvider({ children }) {
     setSortOptions(Array.isArray(data.sortOptions) ? data.sortOptions : fallbackSortOptions);
     setPaymentMethods(Array.isArray(data.paymentMethods) ? data.paymentMethods : fallbackPaymentMethods);
     setWishlist(Array.isArray(data.wishlist) ? data.wishlist : []);
-    setOrders(Array.isArray(data.orders) ? data.orders.map(normalizeOrder) : initialOrders.map(normalizeOrder));
+    setOrders(Array.isArray(data.orders) ? data.orders.map(normalizeOrder) : []);
     setCart(normalizeCart(data.cart));
-    setAddresses(Array.isArray(data.addresses) && data.addresses.length ? data.addresses : savedAddresses);
+    setAddresses(Array.isArray(data.addresses) && data.addresses.length ? data.addresses : []);
     setStyleProfile(data.styleProfile ?? null);
     setUserProfile({ ...defaultUserProfile, ...(data.user ?? {}) });
     if (typeof data.isLoggedIn === 'boolean') setIsLoggedIn(data.isLoggedIn);
@@ -297,7 +312,7 @@ export function AppProvider({ children }) {
           const value = Number(String(order.id).replace(/\D/g, '')) || 0;
           return Math.max(max, value + 1);
         }, 1)
-      : initialOrders.length + 1;
+      : 1;
   }, []);
 
   const refreshBackend = useCallback(async ({ silent = false } = {}) => {
@@ -322,29 +337,61 @@ export function AppProvider({ children }) {
       .then((stored) => {
         if (!stored) return;
         const parsed = JSON.parse(stored);
-        applyBootstrap({
-          products: parsed.products,
-          tailors: parsed.tailors,
-          categories: parsed.categories,
-          sortOptions: parsed.sortOptions,
-          paymentMethods: parsed.paymentMethods,
-          wishlist: parsed.wishlist,
-          orders: parsed.orders,
-          cart: parsed.cart,
-          addresses: parsed.addresses,
-          styleProfile: parsed.styleProfile,
-          user: parsed.userProfile,
-          isLoggedIn: parsed.isLoggedIn,
-          measurements: parsed.measurements,
-          preferences: parsed.preferences,
-          conversations: parsed.conversations,
-          circularPoints: parsed.circularPoints,
-          exchangeHistory: parsed.exchangeHistory,
-          userVouchers: parsed.userVouchers
-        });
+        // When Supabase is active, only restore non-user catalog data from cache
+        // (products, tailors, categories) for faster initial render.
+        // All user-specific data (orders, cart, addresses, wishlist, profile, etc.)
+        // will be fetched fresh from Supabase cloud in refreshBackend().
+        if (isSupabaseConfigured()) {
+          applyBootstrap({
+            products: parsed.products,
+            tailors: parsed.tailors,
+            categories: parsed.categories,
+            sortOptions: parsed.sortOptions,
+            paymentMethods: parsed.paymentMethods
+          });
+        } else {
+          applyBootstrap({
+            products: parsed.products,
+            tailors: parsed.tailors,
+            categories: parsed.categories,
+            sortOptions: parsed.sortOptions,
+            paymentMethods: parsed.paymentMethods,
+            wishlist: parsed.wishlist,
+            orders: parsed.orders,
+            cart: parsed.cart,
+            addresses: parsed.addresses,
+            styleProfile: parsed.styleProfile,
+            user: parsed.userProfile,
+            isLoggedIn: parsed.isLoggedIn,
+            measurements: parsed.measurements,
+            preferences: parsed.preferences,
+            conversations: parsed.conversations,
+            circularPoints: parsed.circularPoints,
+            exchangeHistory: parsed.exchangeHistory,
+            userVouchers: parsed.userVouchers
+          });
+        }
       })
       .catch(() => {})
       .finally(() => {
+        // Also clear stale user data from AsyncStorage if Supabase is active
+        if (isSupabaseConfigured()) {
+          AsyncStorage.getItem(APP_STORAGE_KEY)
+            .then((raw) => {
+              if (!raw) return;
+              const cached = JSON.parse(raw);
+              // Keep only catalog data in cache, wipe user-specific stale data
+              const cleanCache = {
+                products: cached.products,
+                tailors: cached.tailors,
+                categories: cached.categories,
+                sortOptions: cached.sortOptions,
+                paymentMethods: cached.paymentMethods
+              };
+              AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify(cleanCache));
+            })
+            .catch(() => {});
+        }
         setHydrated(true);
       });
   }, [applyBootstrap]);
@@ -441,20 +488,66 @@ export function AppProvider({ children }) {
     setAuthModalConfig((prev) => ({ ...prev, visible: false }));
   }, []);
 
-  const login = useCallback((userData = {}) => {
-    setIsLoggedIn(true);
-    if (userData.name || userData.email) {
-      setUserProfile((prev) => ({ ...prev, ...userData }));
+  const login = useCallback(async (credentials = {}) => {
+    try {
+      if (credentials.email && credentials.password && api.signIn) {
+        await api.signIn(credentials);
+      }
+      setIsLoggedIn(true);
+      if (credentials.name || credentials.email) {
+        setUserProfile((prev) => ({ ...prev, ...credentials }));
+      }
+      await refreshBackend({ silent: true });
+      setNotice(`Selamat datang, ${credentials.name || userProfile.name || 'Member'}!`);
+      return true;
+    } catch (err) {
+      if (credentials.email && !credentials.password) {
+        setIsLoggedIn(true);
+        setUserProfile((prev) => ({ ...prev, ...credentials }));
+        setNotice(`Selamat datang, ${credentials.name || userProfile.name || 'Member'}!`);
+        return true;
+      }
+      throw err;
     }
-    setNotice(`Selamat datang, ${userData.name || userProfile.name || 'Member'}!`);
-  }, [userProfile.name]);
+  }, [refreshBackend, userProfile.name]);
 
-  const logout = useCallback(() => {
+  const register = useCallback(async (data = {}) => {
+    try {
+      if (api.signUp) {
+        await api.signUp(data);
+      }
+      setIsLoggedIn(true);
+      if (data.name || data.email) {
+        setUserProfile((prev) => ({ ...prev, ...data }));
+      }
+      await refreshBackend({ silent: true });
+      setNotice(`Selamat datang di CIRCULAI, ${data.name || 'Member'}!`);
+      return true;
+    } catch (err) {
+      throw err;
+    }
+  }, [refreshBackend]);
+
+  const logout = useCallback(async () => {
+    try {
+      if (api.signOut) {
+        await api.signOut();
+      }
+    } catch {
+      // ignore
+    }
     setIsLoggedIn(false);
+    setCart([]);
+    setOrders([]);
+    setAddresses([]);
+    setWishlist([]);
+    setUserProfile(defaultUserProfile);
+    setMeasurements(defaultMeasurements);
     setNotice('Kamu telah keluar dari akun');
-  }, []);
+    await refreshBackend({ silent: true });
+  }, [refreshBackend]);
 
-  const requireAuth = useCallback((onSuccess, message = 'Silakan masuk ke akun kamu terlebih dahulu untuk melanjutkan pesanan.') => {
+  const requireAuth = useCallback((onSuccess, message = 'Silakan masuk ke akun kamu terlebih dahulu untuk melanjutkan.') => {
     if (isLoggedIn) {
       if (onSuccess) onSuccess();
       return true;
@@ -486,6 +579,12 @@ export function AppProvider({ children }) {
   }, []);
 
   const toggleWishlist = useCallback((productId) => {
+    if (!isLoggedIn) {
+      openAuthModal('Masuk ke akun untuk menyimpan produk ke favorit.', () => {
+        toggleWishlist(productId);
+      });
+      return;
+    }
     const favorite = !wishlist.includes(productId);
     setWishlist((current) =>
       current.includes(productId)
@@ -497,9 +596,15 @@ export function AppProvider({ children }) {
       (nextWishlist) => setWishlist(Array.isArray(nextWishlist) ? nextWishlist : []),
       { action: 'TOGGLE_WISHLIST', payload: { productId, favorite } }
     );
-  }, [runRemote, wishlist]);
+  }, [isLoggedIn, openAuthModal, runRemote, wishlist]);
 
   const addToCart = useCallback((product, customization = {}) => {
+    if (!isLoggedIn) {
+      openAuthModal('Masuk ke akun untuk menambahkan produk ke keranjang belanja.', () => {
+        addToCart(product, customization);
+      });
+      return null;
+    }
     const extraCost = customization.fabric?.extraCost ?? 0;
     const item = {
       cartItemId: `LOCAL-CART-${Date.now()}-${cartCounter.current++}`,
@@ -518,7 +623,7 @@ export function AppProvider({ children }) {
       }
     );
     return item;
-  }, [runRemote]);
+  }, [isLoggedIn, openAuthModal, runRemote]);
 
   const removeFromCart = useCallback((cartItemId) => {
     setCart((current) => current.filter((item) => item.cartItemId !== cartItemId));
@@ -635,7 +740,31 @@ export function AppProvider({ children }) {
     );
   }, [runRemote, userProfile]);
 
+  const updateProductImage = useCallback(async (productId, localUri) => {
+    if (!api.updateProductImage) {
+      setNotice('Fitur ini membutuhkan koneksi Supabase');
+      return null;
+    }
+    try {
+      const publicUrl = await api.updateProductImage(productId, localUri);
+      setProducts((prev) =>
+        prev.map((p) => (String(p.id) === String(productId) ? { ...p, image: publicUrl } : p))
+      );
+      setNotice('Foto produk berhasil diperbarui!');
+      return publicUrl;
+    } catch (err) {
+      setNotice(err?.message ?? 'Gagal mengupload foto produk');
+      return null;
+    }
+  }, [setProducts]);
+
   const saveMeasurements = useCallback((nextMeasurements) => {
+    if (!isLoggedIn) {
+      openAuthModal('Masuk ke akun untuk menyimpan ukuran tubuh agar tersinkron di semua perangkat.', () => {
+        saveMeasurements(nextMeasurements);
+      });
+      return;
+    }
     const merged = { ...measurements, ...nextMeasurements };
     setMeasurements(merged);
     setNotice('Ukuran tubuh berhasil disimpan');
@@ -644,7 +773,7 @@ export function AppProvider({ children }) {
       (payload) => payload && setMeasurements({ ...defaultMeasurements, ...payload }),
       { action: 'SAVE_MEASUREMENTS', payload: merged }
     );
-  }, [measurements, runRemote]);
+  }, [isLoggedIn, measurements, openAuthModal, runRemote]);
 
   const saveStyleProfile = useCallback((profile) => {
     setStyleProfile(profile);
@@ -685,33 +814,28 @@ export function AppProvider({ children }) {
   }, [applyBootstrap, userProfile.photoUri]);
 
   /**
-   * Sends a user message in a tailor conversation.
-   *
-   * When the backend is online, delegates to the server which persists the
-   * message and handles the tailor reply.
-   *
-   * When offline / demo mode:
-   *   1. Appends the user message to local state immediately.
-   *   2. After a short delay, calls Gemini to generate an AI-powered tailor
-   *      reply based on the tailor's persona, the product/order context, and
-   *      the user's message.
-   *   3. Falls back to a rule-based `createTailorReply` if Gemini is
-   *      unavailable.
+   * Sends a message to a tailor and orchestrates the auto-reply flow.
    *
    * @param {string} tailorName   Studio name (used as the conversation key).
-   * @param {string} text         The user's outgoing message.
+   * @param {string} text         The user's outgoing message text.
    * @param {object} context      Optional { orderId, productName }.
+   * @param {string} image        Optional attached image URI (sketch / photo).
    * @returns {boolean} false when params are invalid, true otherwise.
    */
-  const sendTailorMessage = useCallback((tailorName, text, context = {}) => {
-    const cleanText = text.trim();
-    if (!tailorName || !cleanText) return false;
+  const sendTailorMessage = useCallback((tailorName, text, context = {}, image = null) => {
+    if (!isLoggedIn) {
+      openAuthModal('Masuk ke akun untuk berkonsultasi langsung dengan penjahit.');
+      return false;
+    }
+    const cleanText = (text ?? '').trim();
+    if (!tailorName || (!cleanText && !image)) return false;
 
     const sentAt = new Date().toISOString();
     const outgoing = {
       id: `MSG-${Date.now()}-USER`,
       sender: 'user',
-      text: cleanText,
+      text: cleanText || (image ? 'Mengirim foto referensi' : ''),
+      image: image ?? null,
       createdAt: sentAt,
       context
     };
@@ -739,9 +863,9 @@ export function AppProvider({ children }) {
     // Offline / demo mode — generate an AI-powered reply via Gemini.
     setTimeout(async () => {
       // Try Gemini first, fall back to rule-based reply.
-      let replyText = await callGeminiTailorReply(tailorName, cleanText, context);
+      let replyText = await callGeminiTailorReply(tailorName, cleanText || 'Mengirim foto referensi', context, image);
       if (!replyText) {
-        replyText = createTailorReply(cleanText, context);
+        replyText = createTailorReply(cleanText, context, image);
       }
 
       const reply = {
@@ -759,12 +883,16 @@ export function AppProvider({ children }) {
     }, TAILOR_REPLY_DELAY_MS);
 
     return true;
-  }, []);
+  }, [isLoggedIn, openAuthModal]);
 
   const cartSummary = useMemo(() => getLocalCartSummary(cart), [cart]);
 
   // ─── Circular Exchange Actions ──────────────────────────────────────────────
   const submitExchange = useCallback(async (draft) => {
+    if (!isLoggedIn) {
+      openAuthModal('Masuk ke akun untuk mengajukan penukaran atau donasi pakaian.');
+      return null;
+    }
     const { itemTypeId, quantity, mode, donationPartnerId, notes } = draft;
     const earnedPoints = mode === 'donate' ? 0 : calcExchangePoints(itemTypeId, quantity);
     const exchangeId = `EXC-${Date.now().toString(36).toUpperCase()}`;
@@ -790,9 +918,13 @@ export function AppProvider({ children }) {
       setNotice('Donasi barang berhasil diajukan. Terima kasih!');
     }
     return record;
-  }, []);
+  }, [isLoggedIn, openAuthModal]);
 
   const redeemPoints = useCallback((option) => {
+    if (!isLoggedIn) {
+      openAuthModal('Masuk ke akun untuk menukarkan Circular Points.');
+      return null;
+    }
     if (circularPoints < option.pointCost) {
       setNotice('Poin tidak cukup untuk penukaran ini');
       return null;
@@ -814,28 +946,33 @@ export function AppProvider({ children }) {
     setUserVouchers((current) => [voucher, ...current]);
     setNotice(`Voucher ${option.label} berhasil ditukar!`);
     return voucher;
-  }, [circularPoints]);
+  }, [circularPoints, isLoggedIn, openAuthModal]);
 
-  const placeOrder = useCallback(async ({ address, paymentMethod }) => {
-    if (cart.length === 0 || !address?.id || !paymentMethod?.id) return null;
+  const placeOrder = useCallback(async ({ address, paymentMethod, total }) => {
+    if (!cart || cart.length === 0 || !address || !paymentMethod?.id) return null;
+
+    const validAddress = address.id ? address : { ...address, id: `ADDR-${Date.now()}` };
+    const orderTotal = total ?? cartSummary.total;
 
     if (backendOnlineRef.current) {
       try {
-        const order = await api.placeOrder({ address, paymentMethod });
-        setOrders((current) => [normalizeOrder(order), ...current.filter((item) => item.id !== order.id)]);
-        setCart([]);
-        setNotice(`Pesanan ${order.id} berhasil dibuat`);
-        return order;
-      } catch {
-        backendOnlineRef.current = false;
-        setBackendStatus('offline');
+        const order = await api.placeOrder({ address: validAddress, paymentMethod, cart, total: orderTotal });
+        if (order) {
+          const normalized = normalizeOrder(order);
+          setOrders((current) => [normalized, ...current.filter((item) => item.id !== normalized.id)]);
+          setCart([]);
+          setNotice(`Pesanan ${normalized.id} berhasil dibuat`);
+          return normalized;
+        }
+      } catch (err) {
+        console.warn('[placeOrder] Cloud place order error:', err);
       }
     }
 
     const newOrder = createOrderFromCart(cart, orderCounter.current - 1, {
-      address,
+      address: validAddress,
       paymentMethod,
-      total: cartSummary.total
+      total: orderTotal
     });
     orderCounter.current += 1;
     setOrders((current) => [newOrder, ...current]);
@@ -844,17 +981,18 @@ export function AppProvider({ children }) {
     return newOrder;
   }, [cart, cartSummary.total]);
 
-  const createMidtransPayment = useCallback(async (orderId) => {
-    if (!backendOnlineRef.current || !api.createMidtransSnap) {
-      throw new Error('Midtrans hanya tersedia saat backend cloud terhubung');
+  const createMidtransPayment = useCallback(async (orderId, orderPayload = null) => {
+    if (!api.createMidtransSnap) {
+      throw new Error('Midtrans Snap tidak didukung pada API backend saat ini');
     }
     try {
-      return await api.createMidtransSnap(orderId);
+      const targetPayload = orderPayload || orders.find((o) => o.id === orderId);
+      return await api.createMidtransSnap(orderId, targetPayload);
     } catch (error) {
       setNotice(error?.message ?? 'Midtrans belum dapat dibuka');
       throw error;
     }
-  }, []);
+  }, [orders, setNotice]);
 
   const updateOrderStatus = useCallback(async (orderId, nextStatus, actor) => {
     const targetOrder = orders.find((order) => order.id === orderId);
@@ -946,6 +1084,7 @@ export function AppProvider({ children }) {
       openAuthModal,
       closeAuthModal,
       login,
+      register,
       logout,
       requireAuth,
       products,
@@ -984,6 +1123,7 @@ export function AppProvider({ children }) {
       addAddress,
       removeAddress,
       updateUserProfile,
+      updateProductImage,
       saveMeasurements,
       updatePreference,
       sendTailorMessage,
@@ -1016,6 +1156,7 @@ export function AppProvider({ children }) {
       getTailorByName,
       isLoggedIn,
       login,
+      register,
       logout,
       measurements,
       notice,
@@ -1047,6 +1188,7 @@ export function AppProvider({ children }) {
       updateCartQuantity,
       updateOrderStatus,
       updatePreference,
+      updateProductImage,
       updateUserProfile,
       userProfile,
       userVouchers,

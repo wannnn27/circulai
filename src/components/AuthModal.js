@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Modal,
@@ -24,9 +25,11 @@ export default function AuthModal({ visible, onClose, onSuccess, initialMode = '
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAppState();
+  const [loading, setLoading] = useState(false);
+  const { login, register } = useAppState();
 
-  const handleLoginSubmit = () => {
+  const handleLoginSubmit = async () => {
+    if (loading) return;
     if (mode === 'register' && !name.trim()) {
       Alert.alert('Perhatian', 'Silakan masukkan nama lengkap kamu.');
       return;
@@ -35,27 +38,58 @@ export default function AuthModal({ visible, onClose, onSuccess, initialMode = '
       Alert.alert('Perhatian', 'Silakan masukkan email yang valid.');
       return;
     }
-    if (!password.trim() || password.length < 4) {
-      Alert.alert('Perhatian', 'Password minimal 4 karakter.');
+    if (!password.trim() || password.length < 6) {
+      Alert.alert('Perhatian', 'Password minimal 6 karakter.');
       return;
     }
 
-    login({
-      name: name.trim() || 'Adi Arwan Syah',
-      email: email.trim(),
-    });
-
-    onClose();
-    if (onSuccess) onSuccess();
+    setLoading(true);
+    try {
+      if (mode === 'register') {
+        await register({
+          name: name.trim(),
+          email: email.trim(),
+          password: password.trim(),
+        });
+      } else {
+        await login({
+          email: email.trim(),
+          password: password.trim(),
+        });
+      }
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      const errorMsg = err?.message?.toLowerCase?.() || '';
+      let displayError = err?.message || 'Gagal masuk ke akun.';
+      if (errorMsg.includes('invalid login credentials')) {
+        displayError = 'Email atau password salah. Silakan periksa kembali.';
+      } else if (errorMsg.includes('user already registered')) {
+        displayError = 'Email ini sudah terdaftar. Silakan masuk menggunakan password kamu.';
+      }
+      Alert.alert(mode === 'register' ? 'Pendaftaran Gagal' : 'Login Gagal', displayError);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleQuickDemoLogin = () => {
-    login({
-      name: 'Adi Arwan Syah',
-      email: 'adi.arwansyah@email.com',
-    });
-    onClose();
-    if (onSuccess) onSuccess();
+  const handleQuickDemoLogin = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await login({
+        name: 'Adi Arwan Syah',
+        email: 'adi.arwansyah@email.com',
+        password: 'password123',
+      });
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch {
+      onClose();
+      if (onSuccess) onSuccess();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -181,14 +215,21 @@ export default function AuthModal({ visible, onClose, onSuccess, initialMode = '
             </View>
 
             <AnimatedPressable
-              style={styles.submitBtn}
+              style={[styles.submitBtn, loading && { opacity: 0.7 }]}
               onPress={handleLoginSubmit}
+              disabled={loading}
               scaleDown={0.98}
             >
-              <Text style={styles.submitBtnText}>
-                {mode === 'login' ? 'Masuk Sekarang' : 'Daftar Akun'}
-              </Text>
-              <Feather name="arrow-right" size={16} color={colors.white} />
+              {loading ? (
+                <ActivityIndicator color={colors.white} size="small" />
+              ) : (
+                <>
+                  <Text style={styles.submitBtnText}>
+                    {mode === 'login' ? 'Masuk Sekarang' : 'Daftar Akun'}
+                  </Text>
+                  <Feather name="arrow-right" size={16} color={colors.white} />
+                </>
+              )}
             </AnimatedPressable>
 
             <View style={styles.dividerRow}>

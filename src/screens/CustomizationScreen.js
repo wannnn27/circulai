@@ -18,7 +18,7 @@ const measurementFields = [
 
 export default function CustomizationScreen({ product, initial = {}, onBack, onGoCart }) {
   const insets = useSafeAreaInsets();
-  const { addToCart, styleProfile } = useAppState();
+  const { addToCart, styleProfile, requireAuth } = useAppState();
   const [selectedColor, setSelectedColor] = useState(customizationColors.find((item) => item.recommended));
   const [selectedFabric, setSelectedFabric] = useState(customizationFabrics[0]);
   const [sizeType, setSizeType] = useState(initial.size === 'Custom' ? 'custom' : 'standard');
@@ -36,15 +36,17 @@ export default function CustomizationScreen({ product, initial = {}, onBack, onG
       Alert.alert('Ukuran belum valid', 'Isi seluruh ukuran tubuh dengan angka lebih dari 0 agar tailor dapat membuat pola dengan presisi.');
       return;
     }
-    addToCart(product, {
-      color: selectedColor,
-      fabric: selectedFabric,
-      sizeType,
-      size,
-      measurements: sizeType === 'custom' ? measurements : null,
-      notes: initial.notes ?? ''
-    });
-    onGoCart();
+    requireAuth(() => {
+      addToCart(product, {
+        color: selectedColor,
+        fabric: selectedFabric,
+        sizeType,
+        size,
+        measurements: sizeType === 'custom' ? measurements : null,
+        notes: initial.notes ?? ''
+      });
+      onGoCart();
+    }, 'Silakan masuk ke akun CIRCULAI untuk menambahkan produk ke keranjang.');
   };
 
   return (

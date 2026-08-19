@@ -171,22 +171,49 @@ alter table public.return_requests enable row level security;
 alter table public.messages enable row level security;
 alter table public.payment_attempts enable row level security;
 
+drop policy if exists "Products are readable by everyone" on public.products;
 create policy "Products are readable by everyone" on public.products for select using (true);
+
+drop policy if exists "Tailors are readable by everyone" on public.tailors;
 create policy "Tailors are readable by everyone" on public.tailors for select using (true);
 
+drop policy if exists "Users read own profile" on public.profiles;
 create policy "Users read own profile" on public.profiles for select to authenticated using (auth.uid() = user_id);
+
+drop policy if exists "Users insert own profile" on public.profiles;
 create policy "Users insert own profile" on public.profiles for insert to authenticated with check (auth.uid() = user_id);
+
+drop policy if exists "Users update own profile" on public.profiles;
 create policy "Users update own profile" on public.profiles for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "Users manage own measurements" on public.measurements;
 create policy "Users manage own measurements" on public.measurements for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage own preferences" on public.preferences;
 create policy "Users manage own preferences" on public.preferences for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage own style profile" on public.style_profiles;
 create policy "Users manage own style profile" on public.style_profiles for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage own addresses" on public.addresses;
 create policy "Users manage own addresses" on public.addresses for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage own wishlist" on public.wishlists;
 create policy "Users manage own wishlist" on public.wishlists for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage own cart" on public.cart_items;
 create policy "Users manage own cart" on public.cart_items for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage own orders" on public.orders;
 create policy "Users manage own orders" on public.orders for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage own return requests" on public.return_requests;
 create policy "Users manage own return requests" on public.return_requests for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users manage own messages" on public.messages;
 create policy "Users manage own messages" on public.messages for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "Users read own payment attempts" on public.payment_attempts;
 create policy "Users read own payment attempts" on public.payment_attempts for select to authenticated using (auth.uid() = user_id);
 
 create or replace function public.place_order(
@@ -224,19 +251,27 @@ values
   ('return-evidence', 'return-evidence', true)
 on conflict (id) do update set public = excluded.public;
 
+drop policy if exists "Users upload own avatars" on storage.objects;
 create policy "Users upload own avatars" on storage.objects
   for insert to authenticated
   with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Users update own avatars" on storage.objects;
 create policy "Users update own avatars" on storage.objects
   for update to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Avatar public read" on storage.objects;
 create policy "Avatar public read" on storage.objects
   for select using (bucket_id = 'avatars');
 
+drop policy if exists "Users upload own return evidence" on storage.objects;
 create policy "Users upload own return evidence" on storage.objects
   for insert to authenticated
   with check (bucket_id = 'return-evidence' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Return evidence public read for demo" on storage.objects;
 create policy "Return evidence public read for demo" on storage.objects
   for select using (bucket_id = 'return-evidence');
 
