@@ -4,7 +4,8 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AnimatedPressable from '../components/AnimatedPressable';
-import { formatCurrency } from '../data/appData';
+import PassportModal from '../components/PassportModal';
+import { formatCurrency, computeEcoScore } from '../data/appData';
 import { useAppState } from '../state/AppContext';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
@@ -13,6 +14,7 @@ export default function ProductDetailScreen({ product, onBack, onCustomize, onCh
   const insets = useSafeAreaInsets();
   const [size, setSize] = useState('M');
   const [notes, setNotes] = useState('');
+  const [showPassport, setShowPassport] = useState(false);
   const { wishlist, toggleWishlist, styleProfile, requireAuth } = useAppState();
   const favorite = wishlist.includes(product.id);
 
@@ -20,6 +22,40 @@ export default function ProductDetailScreen({ product, onBack, onCustomize, onCh
 
   const handleChat = () => {
     requireAuth(onChat, 'Masuk ke akun untuk berkonsultasi langsung dengan penjahit.');
+  };
+
+  const demoOrder = {
+    id: `DPP-${product.id}`,
+    product: product.name,
+    tailor: product.tailor,
+    tailorCity: product.tailorCity,
+    price: formatCurrency(product.price),
+    rawPrice: product.price,
+    image: product.image,
+    material: product.material,
+    savedFabric: product.savedFabric,
+    status: 'COMPLETED',
+    orderType: 'mto',
+    placedAtLabel: 'Hari ini',
+    eta: product.eta,
+    passport: {
+      id: `DPP-${product.id}`,
+      serialNumber: `CRC-${String(product.id).toUpperCase()}-2026`,
+      productName: product.name,
+      tailor: product.tailor,
+      productionLocation: product.tailorCity,
+      materialOrigin: product.material,
+      impact: {
+        savedFabric: product.savedFabric,
+        estimatedCo2: '2.7 kg CO₂',
+      },
+      verificationCode: 'VERIFIED-CIRCULAI-CHAIN',
+      issuedAt: '2026-08-21',
+      activatedAt: '2026-08-21',
+      status: 'ACTIVE',
+      verification: 'Terverifikasi Sirkular',
+      qrSeed: 98765,
+    },
   };
 
   return (
@@ -54,7 +90,7 @@ export default function ProductDetailScreen({ product, onBack, onCustomize, onCh
               </AnimatedPressable>
               <AnimatedPressable
                 style={[styles.iconButton, favorite && styles.iconButtonFavorite]}
-                onPress={() => toggleWishlist(product.id)}
+                onPress={() => requireAuth(() => toggleWishlist(product.id), 'Masuk ke akun untuk menyimpan produk ke Wishlist.')}
                 scaleDown={0.88}
               >
                 <Feather
@@ -109,6 +145,26 @@ export default function ProductDetailScreen({ product, onBack, onCustomize, onCh
             </View>
           </View>
 
+          {/* Digital Product Passport CTA Banner */}
+          <AnimatedPressable
+            style={styles.dppBanner}
+            onPress={() => setShowPassport(true)}
+            scaleDown={0.97}
+          >
+            <View style={styles.dppBannerLeft}>
+              <View style={styles.dppBannerIcon}>
+                <MaterialCommunityIcons name="qrcode-scan" size={20} color={colors.white} />
+              </View>
+              <View style={styles.dppBannerCopy}>
+                <Text style={styles.dppBannerTitle}>Digital Product Passport (DPP)</Text>
+                <Text style={styles.dppBannerSub}>
+                  Eco-Score {computeEcoScore(product)}/100 · Verifikasi jejak sirkular & material
+                </Text>
+              </View>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.white} />
+          </AnimatedPressable>
+
           {/* Info card */}
           <View style={styles.infoCard}>
             <InfoRow icon="clock" label="Estimasi Produksi" value={product.eta} />
@@ -156,7 +212,7 @@ export default function ProductDetailScreen({ product, onBack, onCustomize, onCh
             <View style={styles.customAlert}>
               <MaterialCommunityIcons name="lightning-bolt" size={14} color={colors.forest} />
               <Text style={styles.customAlertText}>
-                ✨ Profil AI Stylist Anda teraktifkan. Penjahit akan memotong pola kain sesuai detail ukuran Anda.
+                Profil AI Stylist Anda teraktifkan. Penjahit akan memotong pola kain sesuai detail ukuran Anda.
               </Text>
             </View>
           )}
@@ -223,6 +279,14 @@ export default function ProductDetailScreen({ product, onBack, onCustomize, onCh
           <Feather name="arrow-right" size={18} color={colors.white} />
         </AnimatedPressable>
       </View>
+
+      {showPassport && (
+        <PassportModal
+          order={demoOrder}
+          initialTab="passport"
+          onClose={() => setShowPassport(false)}
+        />
+      )}
     </View>
   );
 }
@@ -395,6 +459,46 @@ const styles = StyleSheet.create({
     color: colors.warmGray,
     fontSize: 9,
     lineHeight: 13,
+    marginTop: 2,
+  },
+  // ─── Digital Product Passport Banner ──────────────────────────────────────
+  dppBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.forest,
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 18,
+    ...shadows.forest,
+  },
+  dppBannerLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginRight: 8,
+  },
+  dppBannerIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  dppBannerCopy: {
+    flex: 1,
+  },
+  dppBannerTitle: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  dppBannerSub: {
+    color: colors.sand,
+    fontSize: 9,
+    fontWeight: '700',
     marginTop: 2,
   },
   // ─── Info card ────────────────────────────────────────────────────────────

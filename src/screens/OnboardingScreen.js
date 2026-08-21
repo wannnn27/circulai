@@ -213,6 +213,47 @@ export default function OnboardingScreen({ onDone }) {
             </View>
           ))}
         </View>
+
+        {/* Impact Numbers — tampil di slide 2 dan 3 */}
+        {index >= 1 && (
+          <View style={styles.impactRow}>
+            {index === 1 ? (
+              <>
+                <View style={styles.impactStat}>
+                  <Text style={styles.impactStatVal}>1,280+</Text>
+                  <Text style={styles.impactStatLabel}>Pesanan{'\n'}Made-to-Order</Text>
+                </View>
+                <View style={styles.impactDivider} />
+                <View style={styles.impactStat}>
+                  <Text style={styles.impactStatVal}>2.4 ton</Text>
+                  <Text style={styles.impactStatLabel}>Kain Sisa{'\n'}Dimanfaatkan</Text>
+                </View>
+                <View style={styles.impactDivider} />
+                <View style={styles.impactStat}>
+                  <Text style={styles.impactStatVal}>0%</Text>
+                  <Text style={styles.impactStatLabel}>Stok Mati{'\n'}Terbuang</Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.impactStat}>
+                  <Text style={styles.impactStatVal}>134</Text>
+                  <Text style={styles.impactStatLabel}>Penjahit{'\n'}UMKM Lokal</Text>
+                </View>
+                <View style={styles.impactDivider} />
+                <View style={styles.impactStat}>
+                  <Text style={styles.impactStatVal}>4 Kota</Text>
+                  <Text style={styles.impactStatLabel}>Sentra Fashion{'\n'}Indonesia</Text>
+                </View>
+                <View style={styles.impactDivider} />
+                <View style={styles.impactStat}>
+                  <Text style={styles.impactStatVal}>100%</Text>
+                  <Text style={styles.impactStatLabel}>Direct to{'\n'}Artisan</Text>
+                </View>
+              </>
+            )}
+          </View>
+        )}
       </Animated.View>
 
       <View style={styles.bottomArea}>
@@ -450,6 +491,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 7,
     marginTop: 14,
+  },
+  // ─── Impact Stats Row (Slide 2 & 3) ──────────────────────────────────────
+  impactRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.sandLight,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.sand,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    marginTop: 14,
+    alignItems: 'center',
+  },
+  impactStat: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 3,
+  },
+  impactStatVal: {
+    color: colors.forest,
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  impactStatLabel: {
+    color: colors.warmGray,
+    fontSize: 8,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 11,
+  },
+  impactDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: colors.lightGray,
   },
   featurePill: {
     flexDirection: 'row',

@@ -54,7 +54,7 @@ function PointBadge({ points, small }) {
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function ExchangeScreen({ onBack }) {
   const insets = useSafeAreaInsets();
-  const { circularPoints, exchangeHistory, submitExchange, redeemPoints } = useAppState();
+  const { circularPoints, exchangeHistory, submitExchange, redeemPoints, requireAuth } = useAppState();
   const [activeTab, setActiveTab] = useState('tukar');
 
   // ─── Tukar flow state ─────────────────────────────────────────────────────
@@ -96,17 +96,19 @@ export default function ExchangeScreen({ onBack }) {
     else if (step === STEP_CONFIRM) setStep(STEP_MODE);
   }, [step]);
 
-  const handleSubmit = useCallback(async () => {
-    const record = await submitExchange({
-      itemTypeId: selectedType.id,
-      quantity: parseFloat(quantity),
-      mode,
-      donationPartnerId: selectedPartner?.id ?? null,
-      notes
-    });
-    setSubmittedRecord(record);
-    setStep(STEP_SUCCESS);
-  }, [submitExchange, selectedType, quantity, mode, selectedPartner, notes]);
+  const handleSubmit = useCallback(() => {
+    requireAuth(async () => {
+      const record = await submitExchange({
+        itemTypeId: selectedType.id,
+        quantity: parseFloat(quantity),
+        mode,
+        donationPartnerId: selectedPartner?.id ?? null,
+        notes
+      });
+      setSubmittedRecord(record);
+      setStep(STEP_SUCCESS);
+    }, 'Silakan masuk ke akun CIRCULAI untuk mengajukan tukar barang.');
+  }, [submitExchange, selectedType, quantity, mode, selectedPartner, notes, requireAuth]);
 
   const handleReset = useCallback(() => {
     setStep(STEP_SELECT);
@@ -120,8 +122,10 @@ export default function ExchangeScreen({ onBack }) {
 
   // ─── Redeem ───────────────────────────────────────────────────────────────
   const handleRedeem = useCallback((option) => {
-    redeemPoints(option);
-  }, [redeemPoints]);
+    requireAuth(() => {
+      redeemPoints(option);
+    }, 'Silakan masuk ke akun CIRCULAI untuk menukar poin dengan voucher.');
+  }, [redeemPoints, requireAuth]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -508,7 +512,7 @@ function PoinTab({ circularPoints, tier, nextTier, tierProgress, exchangeHistory
           </Text>
         )}
         {!nextTier && (
-          <Text style={styles.tierProgressHint}>🏆 Tier tertinggi tercapai!</Text>
+          <Text style={styles.tierProgressHint}>Tier tertinggi tercapai</Text>
         )}
       </View>
 
@@ -550,7 +554,7 @@ function PoinTab({ circularPoints, tier, nextTier, tierProgress, exchangeHistory
                 <Text style={styles.historyStatus}>{record.status}</Text>
               </View>
               <Text style={[styles.historyPoints, { color: record.mode === 'donate' ? colors.terracotta : colors.warning }]}>
-                {record.mode === 'donate' ? '♥ Donasi' : `+${record.earnedPoints} pts`}
+                {record.mode === 'donate' ? 'Donasi' : `+${record.earnedPoints} pts`}
               </Text>
             </View>
           );

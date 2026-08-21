@@ -497,6 +497,7 @@ export function AppProvider({ children }) {
       if (credentials.name || credentials.email) {
         setUserProfile((prev) => ({ ...prev, ...credentials }));
       }
+      setOrders((prev) => (prev.length > 0 ? prev : initialOrders.map(normalizeOrder)));
       await refreshBackend({ silent: true });
       setNotice(`Selamat datang, ${credentials.name || userProfile.name || 'Member'}!`);
       return true;
@@ -504,6 +505,7 @@ export function AppProvider({ children }) {
       if (credentials.email && !credentials.password) {
         setIsLoggedIn(true);
         setUserProfile((prev) => ({ ...prev, ...credentials }));
+        setOrders((prev) => (prev.length > 0 ? prev : initialOrders.map(normalizeOrder)));
         setNotice(`Selamat datang, ${credentials.name || userProfile.name || 'Member'}!`);
         return true;
       }
@@ -520,6 +522,7 @@ export function AppProvider({ children }) {
       if (data.name || data.email) {
         setUserProfile((prev) => ({ ...prev, ...data }));
       }
+      setOrders((prev) => (prev.length > 0 ? prev : initialOrders.map(normalizeOrder)));
       await refreshBackend({ silent: true });
       setNotice(`Selamat datang di CIRCULAI, ${data.name || 'Member'}!`);
       return true;
@@ -1077,6 +1080,9 @@ export function AppProvider({ children }) {
     image: null
   }, [tailors]);
 
+  const effectiveCircularPoints = isLoggedIn ? circularPoints : 0;
+  const effectiveOrders = isLoggedIn ? orders : [];
+
   const value = useMemo(
     () => ({
       isLoggedIn,
@@ -1093,7 +1099,7 @@ export function AppProvider({ children }) {
       sortOptions,
       paymentMethods,
       wishlist,
-      orders,
+      orders: effectiveOrders,
       cart,
       cartSummary,
       addresses,
@@ -1106,7 +1112,8 @@ export function AppProvider({ children }) {
       preferences,
       conversations,
       notice,
-      circularPoints,
+      circularPoints: effectiveCircularPoints,
+      rawCircularPoints: circularPoints,
       exchangeHistory,
       userVouchers,
       backend: {

@@ -182,8 +182,41 @@ export default function CustomDesignScreen({ onBack, onAddedToCart, registerBack
                 );
               })}
             </View>
+
+            {/* Tailor Assigned Card */}
+            <View style={styles.tailorCard}>
+              <View style={styles.tailorCardHeader}>
+                <MaterialCommunityIcons name="check-decagram" size={16} color={colors.forest} />
+                <Text style={styles.tailorCardTitle}>Penjahit UMKM Lokal Tersedia</Text>
+              </View>
+              <View style={styles.tailorCardRow}>
+                <View style={styles.tailorCardAvatar}>
+                  <MaterialCommunityIcons name="account-circle" size={36} color={colors.forest} />
+                </View>
+                <View style={styles.tailorCardInfo}>
+                  <Text style={styles.tailorCardName}>{model.tailor}</Text>
+                  <View style={styles.tailorCardMeta}>
+                    <Feather name="map-pin" size={10} color={colors.warmGray} />
+                    <Text style={styles.tailorCardCity}>{model.city}</Text>
+                  </View>
+                  <Text style={styles.tailorCardDesc}>
+                    Akan mengerjakan pesanan bespoke kamu secara personal
+                  </Text>
+                </View>
+                <View style={styles.tailorCardBadge}>
+                  <MaterialCommunityIcons name="hand-heart-outline" size={16} color={colors.ming} />
+                </View>
+              </View>
+              <View style={styles.tailorCardEco}>
+                <MaterialCommunityIcons name="leaf" size={11} color={colors.forest} />
+                <Text style={styles.tailorCardEcoText}>
+                  Kain sisa lokal · Zero overstock production · Direct to artisan
+                </Text>
+              </View>
+            </View>
           </View>
         )}
+
 
         {/* Step 2: Fabric */}
         {step === 2 && (
@@ -467,6 +500,88 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.forest,
+  },
+  // ─── Tailor Assigned Card ─────────────────────────────────────────────────
+  tailorCard: {
+    marginTop: 16,
+    borderRadius: 18,
+    backgroundColor: colors.successLight,
+    borderWidth: 1.5,
+    borderColor: colors.forestLight,
+    padding: 14,
+    gap: 10,
+  },
+  tailorCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  tailorCardTitle: {
+    color: colors.forest,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.1,
+  },
+  tailorCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  tailorCardAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(47,79,58,0.12)',
+  },
+  tailorCardInfo: {
+    flex: 1,
+  },
+  tailorCardName: {
+    color: colors.charcoal,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  tailorCardMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+    marginBottom: 3,
+  },
+  tailorCardCity: {
+    color: colors.warmGray,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  tailorCardDesc: {
+    color: colors.warmGray,
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  tailorCardBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.infoLight,
+  },
+  tailorCardEco: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(47,79,58,0.08)',
+    borderRadius: 10,
+    padding: 8,
+  },
+  tailorCardEcoText: {
+    color: colors.forest,
+    fontSize: 9,
+    fontWeight: '700',
+    flex: 1,
+    lineHeight: 13,
   },
   iconWrapper: {
     width: 52,

@@ -25,12 +25,14 @@ const ONBOARDING_KEY = '@circulai/has_completed_onboarding';
 export default function App() {
   const [phase, setPhase] = useState('splash');
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const onboardingCompletedRef = React.useRef(false);
   const backgroundColor = colors.ivory;
 
   useEffect(() => {
     AsyncStorage.getItem(ONBOARDING_KEY)
       .then((val) => {
         if (val === 'true') {
+          onboardingCompletedRef.current = true;
           setHasCompletedOnboarding(true);
         }
       })
@@ -46,8 +48,17 @@ export default function App() {
     NavigationBar.setBorderColorAsync(colors.lightGray).catch(() => {});
   }, []);
 
-  const handleSplashDone = () => {
-    if (hasCompletedOnboarding) {
+  const handleSplashDone = async () => {
+    try {
+      const val = await AsyncStorage.getItem(ONBOARDING_KEY);
+      if (val === 'true' || onboardingCompletedRef.current || hasCompletedOnboarding) {
+        setPhase('main');
+        return;
+      }
+    } catch {
+      // Fallback to ref or state
+    }
+    if (onboardingCompletedRef.current || hasCompletedOnboarding) {
       setPhase('main');
     } else {
       setPhase('onboarding');
@@ -56,6 +67,7 @@ export default function App() {
 
   const handleOnboardingDone = () => {
     AsyncStorage.setItem(ONBOARDING_KEY, 'true').catch(() => {});
+    onboardingCompletedRef.current = true;
     setHasCompletedOnboarding(true);
     setPhase('main');
   };

@@ -26,8 +26,8 @@ export const tabs = [
   { id: 'home', label: 'Home', icon: 'home' },
   { id: 'explore', label: 'Explore', icon: 'search' },
   { id: 'quiz', label: 'AI Stylist', icon: 'zap' },
-  { id: 'orders', label: 'Orders', icon: 'package' },
-  { id: 'profile', label: 'Profile', icon: 'user' }
+  { id: 'impact', label: 'Dampak', icon: 'leaf' },
+  { id: 'profile', label: 'Profil', icon: 'user' }
 ];
 
 export const categories = ['Semua', 'Outer', 'Dress', 'Kemeja', 'Casual', 'Formal'];

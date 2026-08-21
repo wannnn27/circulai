@@ -58,7 +58,7 @@ export default function StylistScreen({
   const [step, setStep] = useState(1);
   const [answers, setAnswers] = useState({});
   const [loadingIndex, setLoadingIndex] = useState(0);
-  const { products, styleProfile, saveStyleProfile, resetStyleProfile, wishlist, toggleWishlist } = useAppState();
+  const { products, styleProfile, saveStyleProfile, resetStyleProfile, wishlist, toggleWishlist, requireAuth } = useAppState();
 
   const result = useMemo(() => {
     if (step === 'result') return styleProfile ?? getStyleAnalysis(answers);
@@ -542,7 +542,7 @@ function ResultScreen({ result, answers = {}, onBack, onRestart, onNavigate, onP
             product={product}
             grid
             favorite={wishlist.includes(product.id)}
-            onToggleFavorite={() => toggleWishlist(product.id)}
+            onToggleFavorite={() => requireAuth(() => toggleWishlist(product.id), 'Masuk ke akun untuk menyimpan produk ke Wishlist.')}
             onPress={() => onProductPress(product)}
           />
         ))}

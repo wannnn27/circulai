@@ -26,6 +26,8 @@ const faqItems = [
 
 export default function ProfileActionModal({ panel, onClose }) {
   const {
+    circularPoints,
+    isLoggedIn,
     measurements,
     preferences,
     saveMeasurements,
@@ -167,13 +169,13 @@ export default function ProfileActionModal({ panel, onClose }) {
                   <View style={styles.membershipTop}>
                     <View>
                       <Text style={styles.membershipKicker}>CURRENT TIER</Text>
-                      <Text style={styles.membershipTier}>Green Member</Text>
+                      <Text style={styles.membershipTier}>{isLoggedIn ? 'Green Member' : 'Guest'}</Text>
                     </View>
                     <MaterialCommunityIcons name="leaf-circle" size={48} color={colors.sand} />
                   </View>
-                  <Text style={styles.membershipPoints}>320 Impact Points</Text>
-                  <View style={styles.progressTrack}><View style={styles.progressFill} /></View>
-                  <Text style={styles.membershipHint}>180 poin lagi menuju Emerald</Text>
+                  <Text style={styles.membershipPoints}>{circularPoints} Impact Points</Text>
+                  <View style={styles.progressTrack}><View style={[styles.progressFill, { width: isLoggedIn ? '64%' : '0%' }]} /></View>
+                  <Text style={styles.membershipHint}>{isLoggedIn ? `${Math.max(0, 500 - circularPoints)} poin lagi menuju Emerald` : 'Masuk akun untuk mengumpulkan poin'}</Text>
                 </View>
                 <Text style={styles.sectionTitle}>Benefit aktif</Text>
                 <Benefit icon="truck-outline" title="Prioritas produksi" desc="Antrean produksi lebih cepat untuk member." />

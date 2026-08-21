@@ -21,7 +21,7 @@ export default function ExploreScreen({ onProductPress, onNavigate, onBack, wish
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('Terbaru');
   const [filterOpen, setFilterOpen] = useState(false);
-  const { categories, products, sortOptions, wishlist, cart, toggleWishlist } = useAppState();
+  const { categories, products, sortOptions, wishlist, cart, toggleWishlist, requireAuth } = useAppState();
 
   // Debounce the raw search query so the filter memo only re-runs
   // after 250ms of user idle time (not on every single keystroke).
@@ -207,7 +207,7 @@ export default function ExploreScreen({ onProductPress, onNavigate, onBack, wish
               product={product}
               grid
               favorite={wishlist.includes(product.id)}
-              onToggleFavorite={() => toggleWishlist(product.id)}
+              onToggleFavorite={() => requireAuth(() => toggleWishlist(product.id), 'Masuk ke akun untuk menyimpan produk ke Wishlist.')}
               onPress={() => onProductPress(product)}
             />
           ))}

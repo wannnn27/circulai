@@ -234,6 +234,27 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
       >
         {/* ─── Top Blibli-Inspired Header Bar ─────────────────────────────── */}
         <View style={styles.topHeader}>
+          {/* Personalized Greeting Strip */}
+          <View style={styles.greetingStrip}>
+            <View style={styles.greetingLeft}>
+              <MaterialCommunityIcons name="hand-wave" size={14} color={colors.warning} />
+              <Text style={styles.greetingText}>
+                {(() => {
+                  const hour = new Date().getHours();
+                  if (hour < 11) return 'Selamat Pagi';
+                  if (hour < 15) return 'Selamat Siang';
+                  if (hour < 18) return 'Selamat Sore';
+                  return 'Selamat Malam';
+                })()}
+                {isLoggedIn ? ', Adi!' : '! Selamat datang di CIRCULAI'}
+              </Text>
+            </View>
+            <Pressable style={styles.greetingImpactBtn} onPress={() => onNavigate('impact')}>
+              <MaterialCommunityIcons name="leaf" size={11} color={colors.forest} />
+              <Text style={styles.greetingImpactText}>{circularPoints} poin</Text>
+            </Pressable>
+          </View>
+
           <View style={styles.searchRow}>
             {/* Scan Icon */}
             <Pressable
@@ -243,6 +264,7 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
             >
               <MaterialCommunityIcons name="qrcode-scan" size={20} color={colors.charcoal} />
             </Pressable>
+
 
             {/* Search Box Input */}
             <AnimatedPressable
@@ -578,7 +600,7 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
                     <View style={styles.stockMeterTrack}>
                       <View style={[styles.stockMeterFill, { width: `${stockPercent}%` }]} />
                     </View>
-                    <Text style={styles.stockMeterText}>Sisa {stock} 🔥</Text>
+                    <Text style={styles.stockMeterText}>Sisa {stock} unit</Text>
 
                     <Pressable
                       style={styles.buyNowBtn}
@@ -628,7 +650,7 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
               product={product}
               grid
               favorite={wishlist.includes(product.id)}
-              onToggleFavorite={() => toggleWishlist(product.id)}
+              onToggleFavorite={() => requireAuth(() => toggleWishlist(product.id), 'Masuk ke akun untuk menyimpan produk ke Wishlist.')}
               onPress={() => onProductPress(product)}
             />
           ))}
@@ -680,30 +702,29 @@ export default function HomeScreen({ isActive = true, onNavigate, onProductPress
           ))}
         </ScrollView>
 
-        {/* ─── Impact Card Dashboard ────────────────────────────────────── */}
-        <View style={styles.impactCard}>
-          <View style={styles.impactHeader}>
-            <View style={styles.impactIconBg}>
-              <MaterialCommunityIcons name="recycle" size={20} color={colors.white} />
+          {/* ─── UMKM Impact Banner ──────────────────────────────────────── */}
+          <AnimatedPressable
+            style={styles.umkmBanner}
+            onPress={() => onNavigate('impact')}
+            scaleDown={0.97}
+          >
+            <View style={styles.umkmBannerLeft}>
+              <View style={styles.umkmBannerIcon}>
+                <MaterialCommunityIcons name="account-group" size={22} color={colors.white} />
+              </View>
+              <View style={styles.umkmBannerText}>
+                <Text style={styles.umkmBannerTitle}>134 Penjahit UMKM</Text>
+                <Text style={styles.umkmBannerSub}>
+                  Setiap pesanan memberdayakan artisan lokal Indonesia
+                </Text>
+              </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.impactTitle}>Your Style, Less Waste</Text>
-              <Text style={styles.impactCopy}>
-                Setiap pesanan membantu mengurangi kain sisa & mendukung UMKM fashion lokal.
-              </Text>
+            <View style={styles.umkmBannerArrow}>
+              <Feather name="arrow-right" size={16} color={colors.white} />
             </View>
-          </View>
+          </AnimatedPressable>
 
-          <View style={styles.impactDivider} />
 
-          <View style={styles.impactStats}>
-            <ImpactStat icon="scissors-cutting" value="2.4 ton" label="Kain sisa dimanfaatkan" />
-            <View style={styles.impactStatDivider} />
-            <ImpactStat icon="account-group-outline" value="134" label="Penjahit lokal" />
-            <View style={styles.impactStatDivider} />
-            <ImpactStat icon="package-variant" value="1,280" label="Made-to-order" />
-          </View>
-        </View>
       </ScrollView>
 
       {/* ─── Digital Product Passport Scanner Camera Modal ────────────── */}
@@ -826,11 +847,46 @@ const styles = StyleSheet.create({
   topHeader: {
     backgroundColor: colors.white,
     paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingTop: 10,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.lightGray,
     gap: 8,
+  },
+  // ─── Greeting Strip ────────────────────────────────────────────────────────
+  greetingStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 4,
+  },
+  greetingLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  greetingText: {
+    color: colors.charcoal,
+    fontSize: 13,
+    fontWeight: '700',
+    flex: 1,
+  },
+  greetingImpactBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.sandLight,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderColor: colors.sand,
+  },
+  greetingImpactText: {
+    color: colors.forest,
+    fontSize: 10,
+    fontWeight: '900',
   },
   searchRow: {
     flexDirection: 'row',
@@ -1572,6 +1628,55 @@ const styles = StyleSheet.create({
   tailorSold: {
     color: colors.warmGray,
     fontSize: 10,
+  },
+  // ─── UMKM Banner ──────────────────────────────────────────────────────────
+  umkmBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.ming,
+    borderRadius: 18,
+    padding: 14,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    marginTop: 4,
+    ...shadows.sm,
+  },
+  umkmBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  umkmBannerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  umkmBannerText: {
+    flex: 1,
+  },
+  umkmBannerTitle: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  umkmBannerSub: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 10,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  umkmBannerArrow: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
   // ─── Impact Dashboard ──────────────────────────────────────────────────────
   impactCard: {

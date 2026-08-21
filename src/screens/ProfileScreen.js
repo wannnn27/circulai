@@ -149,13 +149,52 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
 
       {/* ─── Floating stats card ──────────────────────────────────────────── */}
       <View style={styles.statsCard}>
-        <MetricCard value={`${orders.length}`} label="Pesanan" flat />
+        <MetricCard value={`${isLoggedIn ? orders.length : 0}`} label="Pesanan" flat />
         <View style={styles.statsDivider} />
-        <MetricCard value="2.4m" label="Kain Hemat" flat />
+        <MetricCard value={isLoggedIn ? "2.4m" : "0m"} label="Kain Hemat" flat />
         <View style={styles.statsDivider} />
         <Pressable onPress={() => (onExchange ? onExchange() : onNavigate('exchange'))}>
-          <MetricCard value={`${circularPoints ?? 320}`} label="Impact Pts" flat />
+          <MetricCard value={`${circularPoints}`} label="Impact Pts" flat />
         </Pressable>
+      </View>
+
+      {/* ─── Quick Access — Pesanan & Impact ───────────────────────────────── */}
+      <View style={styles.quickRow}>
+        <AnimatedPressable
+          style={styles.quickCard}
+          onPress={() => requireAuth(() => onNavigate('orders'), 'Masuk untuk melihat pesanan kamu.')}
+          scaleDown={0.96}
+        >
+          <View style={[styles.quickIcon, { backgroundColor: '#E8F5E3' }]}>
+            <Feather name="package" size={18} color={colors.forest} />
+          </View>
+          <Text style={styles.quickLabel}>Pesanan</Text>
+          <Text style={styles.quickSub}>{isLoggedIn ? orders.length : 0} aktif</Text>
+        </AnimatedPressable>
+
+        <AnimatedPressable
+          style={styles.quickCard}
+          onPress={() => onNavigate('impact')}
+          scaleDown={0.96}
+        >
+          <View style={[styles.quickIcon, { backgroundColor: '#FDF4E3' }]}>
+            <MaterialCommunityIcons name="leaf" size={18} color={colors.warning} />
+          </View>
+          <Text style={styles.quickLabel}>Dampak</Text>
+          <Text style={styles.quickSub}>{circularPoints} poin</Text>
+        </AnimatedPressable>
+
+        <AnimatedPressable
+          style={styles.quickCard}
+          onPress={() => requireAuth(() => onNavigate('exchange'), 'Masuk untuk eco swap.')}
+          scaleDown={0.96}
+        >
+          <View style={[styles.quickIcon, { backgroundColor: '#E6F0F4' }]}>
+            <MaterialCommunityIcons name="recycle" size={18} color={colors.ming} />
+          </View>
+          <Text style={styles.quickLabel}>Eco Swap</Text>
+          <Text style={styles.quickSub}>Tukar poin</Text>
+        </AnimatedPressable>
       </View>
 
       {/* ─── AI Style Card ────────────────────────────────────────────────── */}
@@ -187,17 +226,19 @@ export default function ProfileScreen({ onNavigate, onExchange }) {
             <MaterialCommunityIcons name="recycle" size={18} color={colors.white} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.impactTitle}>Impact Points: 320</Text>
-            <Text style={styles.impactCopy}>180 poin lagi untuk naik ke tier Emerald</Text>
+            <Text style={styles.impactTitle}>Impact Points: {circularPoints}</Text>
+            <Text style={styles.impactCopy}>
+              {isLoggedIn ? `${Math.max(0, 500 - circularPoints)} poin lagi untuk naik ke tier Emerald` : 'Masuk ke akun untuk mengumpulkan poin'}
+            </Text>
           </View>
           <Feather name="chevron-right" size={17} color={colors.warmGray} />
         </View>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: '64%' }]} />
+          <View style={[styles.progressFill, { width: isLoggedIn ? '64%' : '0%' }]} />
         </View>
         <View style={styles.progressLabels}>
-          <Text style={styles.progressLabelText}>Green</Text>
-          <Text style={styles.progressLabelText}>64% → Emerald</Text>
+          <Text style={styles.progressLabelText}>{isLoggedIn ? 'Green' : 'Guest'}</Text>
+          <Text style={styles.progressLabelText}>{isLoggedIn ? '64% → Emerald' : '0 Poin'}</Text>
         </View>
       </Pressable>
 
@@ -312,6 +353,41 @@ function handleMenuPress(label, onNavigate, setActivePanel, onExchange, requireA
 const styles = StyleSheet.create({
   content: {
     paddingBottom: 120,
+  },
+  // ─── Quick Row ────────────────────────────────────────────────────────────
+  quickRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginHorizontal: 20,
+    marginBottom: 14,
+  },
+  quickCard: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: colors.lightGray,
+    gap: 5,
+  },
+  quickIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  quickLabel: {
+    color: colors.charcoal,
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  quickSub: {
+    color: colors.warmGray,
+    fontSize: 9,
+    fontWeight: '600',
   },
   // ─── Hero ─────────────────────────────────────────────────────────────────
   hero: {

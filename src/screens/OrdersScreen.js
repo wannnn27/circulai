@@ -19,7 +19,7 @@ export default function OrdersScreen({
   onFocusedOrderHandled
 }) {
   const [selectedView, setSelectedView] = useState(null);
-  const { orders } = useAppState();
+  const { orders, circularPoints } = useAppState();
   const activeOrders = orders.filter((order) => order.status !== 'COMPLETED').length;
 
   useEffect(() => {
@@ -74,7 +74,7 @@ export default function OrdersScreen({
             <View style={styles.summaryDivider} />
             <SummaryItem
               icon="award"
-              value="320"
+              value={String(circularPoints)}
               label="Impact Pts"
             />
           </View>

@@ -42,18 +42,20 @@ import OrderTrackingScreen from '../screens/OrderTrackingScreen';
 import TailorChatScreen from '../screens/TailorChatScreen';
 import ReturnRequestScreen from '../screens/ReturnRequestScreen';
 import ExchangeScreen from '../screens/ExchangeScreen';
+import ImpactDashboardScreen from '../screens/ImpactDashboardScreen';
 import AuthModal from '../components/AuthModal';
 import { TOAST_FADE_IN_MS, TOAST_FADE_OUT_MS, TOAST_VISIBLE_DURATION_MS, TAB_PRELOAD_INTERVAL_MS } from '../config/constants';
 import { layout } from '../styles/layout';
 import { colors, shadows } from '../theme/colors';
 import { useAppState } from '../state/AppContext';
 
-const MAIN_TABS = ['home', 'explore', 'quiz', 'orders', 'profile'];
+const MAIN_TABS = ['home', 'explore', 'quiz', 'impact', 'profile'];
 const MemoHomeScreen = React.memo(HomeScreen);
 const MemoExploreScreen = React.memo(ExploreScreen);
 const MemoStylistScreen = React.memo(StylistScreen);
 const MemoOrdersScreen = React.memo(OrdersScreen);
 const MemoProfileScreen = React.memo(ProfileScreen);
+const MemoImpactScreen = React.memo(ImpactDashboardScreen);
 
 function getRouteKey(route) {
   const params = route.params ?? {};
@@ -75,7 +77,7 @@ export default function MainApp() {
   const historyRef = useRef([]);
   const screenBackHandlerRef = useRef(null);
   const [mountedTabs, setMountedTabs] = useState(() => new Set(['home']));
-  const { notice, setNotice, authModalConfig, closeAuthModal, createMidtransPayment, selectedAddress, addresses } = useAppState();
+  const { notice, setNotice, authModalConfig, closeAuthModal, createMidtransPayment, selectedAddress, addresses, isLoggedIn, openAuthModal } = useAppState();
   const active = route.name;
   const showTabs = MAIN_TABS.includes(active);
 
@@ -285,12 +287,20 @@ export default function MainApp() {
       return <CartScreen onBack={goBack} onExplore={() => navigate('explore')} onContinue={() => navigate('address')} />;
     }
     if (active === 'address') {
+      if (!isLoggedIn) {
+        openAuthModal('Silakan masuk ke akun CIRCULAI untuk memilih alamat & membuat pesanan.');
+        return null;
+      }
       return <AddressScreen onBack={goBack} onContinue={(address) => navigate('payment', { address })} />;
     }
     if (active === 'profile-addresses') {
       return <AddressScreen mode="manage" onBack={goBack} />;
     }
     if (active === 'payment' && params.address) {
+      if (!isLoggedIn) {
+        openAuthModal('Silakan masuk ke akun CIRCULAI untuk menyelesaikan pembayaran.');
+        return null;
+      }
       return (
         <PaymentScreen
           address={params.address}
@@ -418,6 +428,17 @@ export default function MainApp() {
               onPayOrder={handlePayOrder}
               focusedOrderId={active === 'orders' ? tabParams.focusedOrderId : undefined}
               onFocusedOrderHandled={handleFocusedOrder}
+            />
+          </View>
+        )}
+
+        {mountedTabs.has('impact') && (
+          <View
+            pointerEvents={active === 'impact' ? 'auto' : 'none'}
+            style={[styles.screenLayer, active !== 'impact' && styles.screenHidden]}
+          >
+            <MemoImpactScreen
+              onNavigate={navigate}
             />
           </View>
         )}
